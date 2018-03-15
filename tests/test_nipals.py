@@ -1,8 +1,9 @@
-
-import pytest
-from nipals import nipals
-import pandas as pd
 import logging
+
+import pandas as pd
+import pytest
+
+from nipals import nipals
 
 testdata = [
     [pd.np.nan, 67, 90, 98, 120],
@@ -24,14 +25,17 @@ testdata_full = [
     [75, 95, 117, 133, 155]
 ]
 
+
 def test_init_from_df():
     # It should be possible to init a nipals class from a Pandas DataFrame
     assert nipals.Nipals(pd.DataFrame(testdata)).__class__ == nipals.Nipals
+
 
 def test_init_from_data():
     # It should be possible to init a nipals class from something that
     # can be made into a Pandas DataFrame
     assert nipals.Nipals(testdata).__class__ == nipals.Nipals
+
 
 def test_run_pca():
     nip = nipals.Nipals(testdata)
@@ -54,20 +58,25 @@ def test_run_pca():
         0.14327789003413574
     ]
 
+
 def test_run_pca_gramschmidt():
     nip = nipals.Nipals(testdata)
     with pytest.raises(NotImplementedError):
         nip.fit(gramschmidt=True)
 
+
 def test_call_with_too_large_ncomp(caplog):
     nip = nipals.Nipals(testdata)
     assert nip.fit(ncomp=10)
     assert caplog.record_tuples == [
-        ('root',
-        logging.WARNING,
-        'ncomp is larger than the max dimension of the x matrix.\n'
-        'fit will only return 5 components'),
+        (
+            'root',
+            logging.WARNING,
+            'ncomp is larger than the max dimension of the x matrix.\n'
+            'fit will only return 5 components'
+        ),
     ]
+
 
 def test_run_pca_without_na():
     nip = nipals.Nipals(testdata_full)
@@ -80,15 +89,18 @@ def test_run_pca_without_na():
         0.06936702860594454
     ]
 
+
 def test_fail_from_maxiter():
     nip = nipals.Nipals(testdata_full)
     with pytest.raises(RuntimeError):
         nip.fit(maxiter=1)
 
+
 def test_run_pca_with_set_ncomp():
     nip = nipals.Nipals(testdata_full)
     assert nip.fit(ncomp=2)
     assert list(nip.eig) == [5.020518433605382, 1.879323465996815]
+
 
 def test_run_pca_with_precentered_data():
     centered = pd.DataFrame(testdata_full)
@@ -96,6 +108,7 @@ def test_run_pca_with_precentered_data():
     nip = nipals.Nipals(centered)
     assert nip.fit(center=False, ncomp=2)
     assert list(nip.eig) == [5.020518433605382, 1.879323465996815]
+
 
 def test_run_pca_with_prescaled_data():
     scaled = pd.DataFrame(testdata_full)

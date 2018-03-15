@@ -1,7 +1,8 @@
-import pandas as pd
 import logging
 # logging.basicConfig(level=logging.INFO)
 import math
+
+import pandas as pd
 
 
 class Nipals(object):
@@ -16,15 +17,15 @@ class Nipals(object):
         self.x_df = x_df
 
     def fit(
-            self,
-            ncomp=None,
-            tol=0.000001,
-            center=True,
-            scale=True,
-            maxiter=500,
-            startcol=None,
-            gramschmidt=False
-        ):
+        self,
+        ncomp=None,
+        tol=0.000001,
+        center=True,
+        scale=True,
+        maxiter=500,
+        startcol=None,
+        gramschmidt=False
+    ):
         """The Fit method, will fit a PCA to the X data.
 
         Keyword arguments:
@@ -45,7 +46,7 @@ class Nipals(object):
                 'ncomp is larger than the max dimension of the x matrix.\n'
                 'fit will only return {} components'.format(ncomp)
             )
-        #Convert to np array
+        # Convert to np array
         self.x_mat = self.x_df.values
         if center:
             self.x_mean = pd.np.nanmean(self.x_mat, axis=0)
@@ -57,14 +58,15 @@ class Nipals(object):
         TotalSS = pd.np.nansum(self.x_mat*self.x_mat)
         nr, nc = self.x_mat.shape
         # initialize outputs
-        PPp = pd.np.zeros((nc, nc))
-        TTp = pd.np.zeros((nr, nr))
+        # PPp and TTp are for Gram-Schmidt calculations
+        # PPp = pd.np.zeros((nc, nc))
+        # TTp = pd.np.zeros((nr, nr))
         eig = pd.np.empty((ncomp,))
         R2cum = pd.np.empty((ncomp,))
         loadings = pd.np.empty((nc, ncomp))
         scores = pd.np.empty((nr, ncomp))
 
-        #NA handling
+        # NA handling
         x_miss = pd.np.isnan(self.x_mat)
         hasna = x_miss.any()
         if hasna:
@@ -75,7 +77,7 @@ class Nipals(object):
         # p = [None] * ncomp
         self.eig = []
         for comp in range(ncomp):
-            #Set t to first column of X
+            # Set t to first column of X
             if startcol is None:
                 xvar = pd.np.nanvar(self.x_mat, axis=0, ddof=1)
                 startcol_use = pd.np.where(xvar == xvar.max())[0][0]
@@ -85,9 +87,9 @@ class Nipals(object):
 
             if hasna:
                 self.x_mat_0 = pd.np.nan_to_num(self.x_mat)
-                th = self.x_mat_0[:,startcol_use]
+                th = self.x_mat_0[:, startcol_use]
             else:
-                th = self.x_mat[:,startcol_use]
+                th = self.x_mat[:, startcol_use]
             it = 0
             while True:
                 # loadings
@@ -100,7 +102,7 @@ class Nipals(object):
                     ph = self.x_mat.T.dot(th) / sum(th*th)
                 # Gram Schmidt
                 if gramschmidt and comp > 0:
-                    #ph <- ph - PPp %*% ph
+                    # ph <- ph - PPp %*% ph
                     pass
                 # Normalize
                 ph = ph / math.sqrt(pd.np.nansum(ph*ph))
@@ -116,7 +118,7 @@ class Nipals(object):
                     th = self.x_mat.dot(ph) / sum(ph*ph)
                 # Gram Schmidt
                 if gramschmidt and comp > 0:
-                    #th <- th - TTp %*% th
+                    # th <- th - TTp %*% th
                     pass
 
                 # Check convergence
@@ -132,8 +134,8 @@ class Nipals(object):
 
             # Update X
             self.x_mat = self.x_mat - pd.np.outer(th, ph)
-            loadings[:,comp] = ph
-            scores[:,comp] = th
+            loadings[:, comp] = ph
+            scores[:, comp] = th
             eig[comp] = pd.np.nansum(th*th)
 
             # Update (Ph)(Ph)' and (Th)(Th)' for next PC
@@ -144,7 +146,7 @@ class Nipals(object):
             # }
 
             # Cumulative proportion of variance explained
-            R2cum[comp] <- 1 - (pd.np.nansum(self.x_mat*self.x_mat) / TotalSS)
+            R2cum[comp] = 1 - (pd.np.nansum(self.x_mat*self.x_mat) / TotalSS)
 
         # "Uncumulate" R2
         self.R2 = pd.np.insert(pd.np.diff(R2cum), 0, R2cum[0])
