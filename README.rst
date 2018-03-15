@@ -59,7 +59,11 @@ Overview
 
 .. end-badges
 
-A module for calculation of PCA with the NIPALS algorithm
+A module for calculation of PCA with the NIPALS algorithm. Based on the R package
+`nipals <https://cran.r-project.org/package=nipals>`_.
+Tested to give same results as nipals:nipals, with some rounding errors.
+
+Please note that the Gram-Schmidt orthogonalization has not yet been implemented.
 
 * Free software: MIT license
 

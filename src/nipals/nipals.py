@@ -5,7 +5,10 @@ import math
 
 
 class Nipals(object):
-    """A Nipals that can be used for PCA."""
+    """A Nipals class that can be used for PCA.
+
+    Initialize with a Pandas DataFrame or an object that can be turned into a DataFrame
+    (e.g. an array or a dict of lists)"""
     def __init__(self, x_df):
         super(Nipals, self).__init__()
         if type(x_df) != pd.core.frame.DataFrame:
@@ -22,6 +25,16 @@ class Nipals(object):
             startcol=None,
             gramschmidt=False
         ):
+        """The Fit method, will fit a PCA to the X data.
+
+        Keyword arguments:
+        ncomp - number of components, defaults to all
+        tol - tolerance for convergence checking, defaults to 1E-6
+        center - whether to center the data, defaults to True
+        scale - whether to scale the data, defaults to True
+        maxiter - maximum number of iterations before convergence is considered failed, defaults to 500
+        startcol - column in X data to start iteration from, if set to None, the column with maximal variance is selected, defaults to None
+        gramschmidt - wheter to run Gram-Schmidt orthogonalization, defaults to False. Not implemented!"""
         if gramschmidt:
             raise NotImplementedError
         if ncomp is None:
