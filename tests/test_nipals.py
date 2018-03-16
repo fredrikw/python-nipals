@@ -116,3 +116,29 @@ def test_run_pca_with_prescaled_data():
     nip = nipals.Nipals(scaled)
     assert nip.fit(center=False, scale=False, ncomp=2)
     pd.np.testing.assert_almost_equal(list(nip.eig), [5.020518433605, 1.879323465996])
+
+def test_run_pca_check_scores_with_sweep():
+    nip = nipals.Nipals(testdata)
+    assert nip.fit(ncomp=2, eigsweep=True, startcol=1)
+    pd.np.testing.assert_almost_equal(nip.scores.values, [
+        [-0.5585132, 0.1224190],
+        [-0.3801627, 0.1703718],
+        [-0.2026926, 0.3163937],
+        [-0.0337608, -0.6915786],
+        [0.1285239, -0.4501362],
+        [0.3562110, -0.2048250],
+        [0.5982563, 0.3647261],
+    ], 3)
+
+def test_run_pca_check_scores():
+    nip = nipals.Nipals(testdata)
+    assert nip.fit(ncomp=2)
+    pd.np.testing.assert_almost_equal(nip.scores.values, [
+        [-2.72332498,  0.25021637],
+        [-1.85369271,  0.34827344],
+        [-0.98854112,  0.64658032],
+        [-0.16429534, -1.41375825],
+        [ 0.62686116, -0.92008715],
+        [ 1.7370958, -0.41837244],
+        [ 2.91721621,  0.746181]
+    ])

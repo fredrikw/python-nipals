@@ -24,7 +24,8 @@ class Nipals(object):
         scale=True,
         maxiter=500,
         startcol=None,
-        gramschmidt=False
+        gramschmidt=False,
+        eigsweep=False
     ):
         """The Fit method, will fit a PCA to the X data.
 
@@ -35,7 +36,8 @@ class Nipals(object):
         scale - whether to scale the data, defaults to True
         maxiter - maximum number of iterations before convergence is considered failed, defaults to 500
         startcol - column in X data to start iteration from, if set to None, the column with maximal variance is selected, defaults to None
-        gramschmidt - wheter to run Gram-Schmidt orthogonalization, defaults to False. Not implemented!"""
+        gramschmidt - whether to run Gram-Schmidt orthogonalization, defaults to False. Not implemented!
+        eigsweep - whether to sweep out eigenvalues from the final scores, defaults to False"""
         if gramschmidt:
             raise NotImplementedError
         if ncomp is None:
@@ -153,7 +155,8 @@ class Nipals(object):
 
         # Finalize eigenvalues and subtract from scores
         self.eig = pd.Series(pd.np.sqrt(eig))
-        scores = scores / eig
+        if eigsweep:
+            scores = scores / self.eig.values
 
         # Convert results to DataFrames
         self.scores = pd.DataFrame(scores, index=self.x_df.index, columns=["PC{}".format(i+1) for i in range(ncomp)])
