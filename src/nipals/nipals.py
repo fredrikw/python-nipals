@@ -40,6 +40,7 @@ class Nipals(object):
         eigsweep - whether to sweep out eigenvalues from the final scores, defaults to False"""
         if gramschmidt:
             raise NotImplementedError
+        self.eigsweep = eigsweep
         if ncomp is None:
             ncomp = min(self.x_df.shape)
         elif ncomp > min(self.x_df.shape):
@@ -155,10 +156,17 @@ class Nipals(object):
 
         # Finalize eigenvalues and subtract from scores
         self.eig = pd.Series(pd.np.sqrt(eig))
-        if eigsweep:
+        if self.eigsweep:
             scores = scores / self.eig.values
 
         # Convert results to DataFrames
         self.scores = pd.DataFrame(scores, index=self.x_df.index, columns=["PC{}".format(i+1) for i in range(ncomp)])
         self.loadings = pd.DataFrame(loadings, index=self.x_df.columns, columns=["PC{}".format(i+1) for i in range(ncomp)])
+        return True
+    def predict(self, new_x):
+        self.new_x = (new_x - self.x_mean) / self.x_std
+        self.new_x = self.new_x.fillna(0)
+        self.pred = self.new_x.dot(self.loadings)
+        if self.eigsweep:
+            self.pred = self.pred / self.eig.values
         return True

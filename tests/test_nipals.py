@@ -142,3 +142,19 @@ def test_run_pca_check_scores():
         [ 1.7370958, -0.41837244],
         [ 2.91721621,  0.746181]
     ])
+
+def test_predict_from_pca():
+    nip = nipals.Nipals(testdata)
+    nip.fit(ncomp=2)
+    assert nip.predict(pd.DataFrame([[63, 70, 98, 110, 124],
+        [51, 82, 102, 110, 108]]))
+    pd.np.testing.assert_almost_equal(nip.pred.values, [[-1.4465766,  0.4500705],
+        [-1.6229739, -0.340578 ]])
+
+def test_predict_from_pca_with_sweep():
+    nip = nipals.Nipals(testdata)
+    nip.fit(ncomp=2, eigsweep=True)
+    assert nip.predict(pd.DataFrame([[63, 70, 98, 110, 124],
+        [51, 82, 102, 110, 108]]))
+    pd.np.testing.assert_almost_equal(nip.pred.values, [[-0.2966596,  0.2201614],
+        [-0.3328347, -0.1666008]])
