@@ -1,5 +1,7 @@
 import logging
 
+import matplotlib
+
 import pandas as pd
 import pytest
 
@@ -24,6 +26,11 @@ testdata_full = [
     [65, 89, 106, 137, 153],
     [75, 95, 117, 133, 155]
 ]
+
+testdata_class = pd.DataFrame(testdata)
+testdata_class['C1'] = [0, 0, 1, 1, 1, 0, 0]
+testdata_class['C2'] = [1, 1, 0, 0, 0, 1, 1]
+testdata_class = testdata_class.set_index(['C1', 'C2'], append=True)
 
 
 def test_init_from_df():
@@ -158,3 +165,53 @@ def test_predict_from_pca_with_sweep():
         [51, 82, 102, 110, 108]]))
     pd.np.testing.assert_almost_equal(nip.pred.values, [[-0.2966596,  0.2201614],
         [-0.3328347, -0.1666008]])
+
+def test_plot():
+    nip = nipals.Nipals(testdata)
+    nip.fit(ncomp=2)
+    plt = nip.plot()
+    assert isinstance(plt, matplotlib.figure.Figure)
+    return plt
+
+def test_plot_classes():
+    nip = nipals.Nipals(testdata_class)
+    nip.fit(ncomp=2)
+    plt = nip.plot(classlevels=['C1','C2'])
+    assert isinstance(plt, matplotlib.figure.Figure)
+    return plt
+
+def test_plot_classoptions():
+    nip = nipals.Nipals(testdata_class)
+    nip.fit(ncomp=2)
+    plt = nip.plot(classlevels=['C1','C2'], markers=['s', 'o'], classcolors=['red', 'black'])
+    assert isinstance(plt, matplotlib.figure.Figure)
+    return plt
+
+def test_pred_plot():
+    nip = nipals.Nipals(testdata_class)
+    nip.fit(ncomp=2)
+    nip.predict(pd.DataFrame([[63, 70, 98, 110, 124],
+        [51, 82, 102, 110, 108]]))
+    plt = nip.plot(classlevels=['C1','C2'], plotpred=True)
+    assert isinstance(plt, matplotlib.figure.Figure)
+    return plt
+
+def test_pred_plot_options():
+    nip = nipals.Nipals(testdata_class)
+    nip.fit(ncomp=2)
+    nip.predict(pd.DataFrame([
+        [63, 70, 98, 110, 124, 0, 1, 0],
+        [51, 82, 102, 110, 108, 1, 0, 0]
+    ]).set_index([5,6,7], append=True))
+    with pytest.raises(KeyError):
+        plt = nip.plot(classlevels=['C1','C2'], plotpred=True, predlevels=[5,7])
+    plt = nip.plot(classlevels=['C1','C2'], plotpred=True, predlevels=[5,6])
+    assert isinstance(plt, matplotlib.figure.Figure)
+    return plt
+
+def test_loadings_plot():
+    nip = nipals.Nipals(testdata_class)
+    nip.fit(ncomp=2)
+    plt = nip.loadingsplot()
+    assert isinstance(plt, matplotlib.figure.Figure)
+    return plt

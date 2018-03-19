@@ -67,6 +67,8 @@ setup(
     ],
     install_requires=[
         'pandas>=0.22',
+        'scipy>=1.0.0',
+        'matplotlib>2.0.0'
         # eg: 'aspectlib==1.1.1', 'six>=1.7',
     ],
     extras_require={
