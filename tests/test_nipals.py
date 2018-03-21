@@ -32,6 +32,18 @@ testdata_class['C1'] = [0, 0, 1, 1, 1, 0, 0]
 testdata_class['C2'] = [1, 1, 0, 0, 0, 1, 1]
 testdata_class = testdata_class.set_index(['C1', 'C2'], append=True)
 
+yarn = pd.read_csv("tests/yarn.csv", index_col=0)
+yarn_scores = pd.read_csv("tests/yarn_scores.csv", index_col=0).values
+yarn_loadings = pd.read_csv("tests/yarn_loadings.csv", index_col=0).values
+yarn_weights = pd.read_csv("tests/yarn_weights.csv", index_col=0).values
+yarn_missing_scores = pd.read_csv("tests/yarn_missing_scores.csv", index_col=0, usecols=[0,2,3,4]).values
+yarn_missing_loadings = pd.read_csv("tests/yarn_missing_loadings.csv", index_col=0).values
+yarn_missing_weights = pd.read_csv("tests/yarn_missing_weights.csv", index_col=0).values
+
+oliveoil = pd.read_csv("tests/oliveoil.csv", index_col=0)
+oliveoil_scores = pd.read_csv("tests/oliveoil_scores.csv", index_col=0)
+oliveoil_missing_y = pd.read_csv("tests/oliveoil_miss.csv", index_col=0)
+oliveoil_missing_y_scores = pd.read_csv("tests/oliveoil_miss_scores.csv", index_col=0)
 
 def test_init_from_df():
     # It should be possible to init a nipals class from a Pandas DataFrame
@@ -215,3 +227,61 @@ def test_loadings_plot():
     plt = nip.loadingsplot()
     assert isinstance(plt, matplotlib.figure.Figure)
     return plt
+
+def test_pls():
+    pls = nipals.PLS(yarn.iloc[:,:268], yarn.iloc[:, 268])
+    assert pls.fit(ncomp=6, scale=False)
+    pd.np.testing.assert_almost_equal(pls.scores.values, yarn_scores)
+    pd.np.testing.assert_almost_equal(pls.loadings.values, yarn_loadings)
+    pd.np.testing.assert_almost_equal(pls.weights.values, yarn_weights)
+
+def test_pls_nocenter_and_scale():
+    pls = nipals.PLS(yarn.iloc[:,:268] - yarn.iloc[:,:268].mean(), yarn.iloc[:, 268])
+    assert pls.fit(ncomp=6, scale=False, center=False)
+    pd.np.testing.assert_almost_equal(pls.scores.values, yarn_scores)
+    pd.np.testing.assert_almost_equal(pls.loadings.values, yarn_loadings)
+    pd.np.testing.assert_almost_equal(pls.weights.values, yarn_weights)
+
+def test_pls_missing_x():
+    tmpx = yarn.iloc[:,:268]
+    csel = [171, 107, 222, 150, 76, 205, 63, 19, 121, 183]
+    rsel = [23, 0, 3, 22, 15, 21, 19, 7, 19, 5]
+    for r, c in zip(rsel, csel):
+        tmpx.iloc[r,c] = pd.np.nan
+    pls = nipals.PLS(tmpx, yarn.iloc[:, 268])
+    assert pls.fit(ncomp=3)
+    pd.np.testing.assert_almost_equal(pls.scores.values, yarn_missing_scores, 5)
+    pd.np.testing.assert_almost_equal(pls.loadings.values, yarn_missing_loadings)
+    pd.np.testing.assert_almost_equal(pls.weights.values, yarn_missing_weights)
+
+def test_pls_nondf():
+    pls = nipals.PLS(yarn.iloc[:,:268].values, yarn.iloc[:, 268].values)
+    assert pls.fit(ncomp=6, scale=False)
+    pd.np.testing.assert_almost_equal(pls.scores.values, yarn_scores)
+    pd.np.testing.assert_almost_equal(pls.loadings.values, yarn_loadings)
+    pd.np.testing.assert_almost_equal(pls.weights.values, yarn_weights)
+
+def test_pls_optionvariations(caplog):
+    pls = nipals.PLS(yarn.iloc[:,:268], yarn.iloc[:, 268])
+    assert pls.fit()
+    assert pls.fit(ncomp=500, startcol=0)
+    assert caplog.record_tuples == [
+        (
+            'root',
+            logging.WARNING,
+            'ncomp is larger than the max dimension of the x matrix.\n'
+            'fit will only return 28 components'
+        ),
+    ]
+    with pytest.raises(RuntimeError):
+        pls.fit(maxiter=1)
+
+def test_pls_multiy():
+    pls = nipals.PLS(oliveoil.iloc[:, :5], oliveoil.iloc[:, 5:])
+    assert pls.fit(ncomp=2)
+    pd.np.testing.assert_almost_equal(pls.scores.values, oliveoil_scores * [-1, 1], 4)
+
+def test_pls_missing_y():
+    pls = nipals.PLS(oliveoil_missing_y.iloc[:, :5], oliveoil_missing_y.iloc[:, 5:])
+    assert pls.fit(ncomp=2)
+    pd.np.testing.assert_almost_equal(pls.scores.values, oliveoil_missing_y_scores * [-1, 1], 3)

@@ -21,6 +21,192 @@ def simpleEllipse(x, y, alfa, length):
     return r1 * pd.np.cos(mypi) + x.mean(), r2 * pd.np.sin(mypi) + y.mean()
 
 
+class PLS(object):
+    """A class for PLS calculated by the NIPALS algorithm.
+
+    Initialize with a Pandas DataFrame or an object that can be turned into a DataFrame
+    (e.g. an array or a dict of lists)"""
+    def __init__(self, x_df, y_df):
+        super(PLS, self).__init__()
+        if type(x_df) != pd.core.frame.DataFrame:
+            x_df = pd.DataFrame(x_df)
+        if type(y_df) != pd.core.frame.DataFrame:
+            y_df = pd.DataFrame(y_df)
+        # Make sure data is numeric
+        self.x_df = x_df.astype('float')
+        self.y_df = y_df.astype('float')
+
+    def fit(
+        self,
+        ncomp=None,
+        center=True,
+        scale=True,
+        startcol=None,
+        tol=0.000001,
+        maxiter=500
+    ):
+        """The Fit method, will fit a PLS to the X and Y data"""
+        if ncomp is None:
+            ncomp = min(self.x_df.shape)
+        elif ncomp > min(self.x_df.shape):
+            ncomp = min(self.x_df.shape)
+            logging.warning(
+                'ncomp is larger than the max dimension of the x matrix.\n'
+                'fit will only return {} components'.format(ncomp)
+            )
+
+        # Convert to np array
+        self.x_mat = self.x_df.values
+        self.y_mat = self.y_df.values
+        if center:
+            self.x_mean = pd.np.nanmean(self.x_mat, axis=0)
+            self.x_mat = self.x_mat - self.x_mean
+            self.y_mean = pd.np.nanmean(self.y_mat, axis=0)
+            self.y_mat = self.y_mat - self.y_mean
+        if scale:
+            self.x_std = pd.np.nanstd(self.x_mat, axis=0, ddof=1)
+            self.x_mat = self.x_mat / self.x_std
+            self.y_std = pd.np.nanstd(self.y_mat, axis=0, ddof=1)
+            self.y_mat = self.y_mat / self.y_std
+
+        TotalSSX = pd.np.nansum(self.x_mat*self.x_mat)
+        TotalSSY = pd.np.nansum(self.y_mat*self.y_mat)
+        nr, x_nc = self.x_mat.shape
+        y_nc = self.y_mat.shape[1]
+        # initialize outputs
+        eig = pd.np.empty((ncomp,))
+        R2cum = pd.np.empty((ncomp,))
+        loadings = pd.np.empty((x_nc, ncomp))
+        scores = pd.np.empty((nr, ncomp))
+        u = pd.np.empty((nr, ncomp))
+        weights = pd.np.empty((x_nc, ncomp))
+        q = pd.np.empty((y_nc, ncomp))
+        b = pd.np.empty((ncomp,))
+
+        # NA handling
+        x_miss = pd.np.isnan(self.x_mat)
+        x_hasna = x_miss.any()
+        y_miss = pd.np.isnan(self.y_mat)
+        y_hasna = y_miss.any()
+        if x_hasna or y_hasna:
+            logging.info("Data has NA values")
+
+        for comp in range(ncomp):
+            # Set u to some column of Y
+            if startcol is None:
+                yvar = pd.np.nanvar(self.y_mat, axis=0, ddof=1)
+                startcol_use = pd.np.where(yvar == yvar.max())[0][0]
+            else:
+                startcol_use = startcol
+            logging.info("PC {}, starting with column {}".format(comp, startcol_use))
+
+            if y_hasna:
+                self.y_mat_0 = pd.np.nan_to_num(self.y_mat)
+                uh = self.y_mat_0[:, startcol_use]
+            else:
+                uh = self.y_mat[:, startcol_use]
+            th = uh
+
+            if x_hasna:
+                self.x_mat_0 = pd.np.nan_to_num(self.x_mat)
+
+            it = 0
+            while True:
+                # X-block weights
+                if x_hasna:
+                    U2 = pd.np.repeat(uh*uh, x_nc)
+                    U2.shape = (nr, x_nc)
+                    U2[x_miss] = 0
+                    wh = self.x_mat_0.T.dot(uh) / U2.sum(axis=0)
+                else:
+                    wh = self.x_mat.T.dot(uh) / sum(uh*uh)
+                # Normalize
+                wh = wh / math.sqrt(pd.np.nansum(wh*wh))
+
+                # X-block Scores
+                th_old = th
+                if x_hasna:
+                    W2 = pd.np.repeat(wh*wh, nr)
+                    W2.shape = (x_nc, nr)
+                    W2[x_miss.T] = 0
+                    th = self.x_mat_0.dot(wh) / W2.sum(axis=0)
+                else:
+                    th = self.x_mat.dot(wh) / sum(wh*wh)
+
+                # Y-block weights
+                if y_hasna:
+                    T2 = pd.np.repeat(th*th, y_nc)
+                    T2.shape = (nr, y_nc)
+                    T2[y_miss] = 0
+                    qh = self.y_mat_0.T.dot(th) / T2.sum(axis=0)
+                else:
+                    qh = self.y_mat.T.dot(th) / sum(th*th)
+                # Normalize
+                # According to Analytica Chimica Acta, 186 (1986) 1-17 this normalization
+                # should be done. However, if so, the results are not the same as th R package
+                # pls plsr method or Evince.
+                # qh = qh / math.sqrt(pd.np.nansum(qh*qh))
+
+                # Y-block Scores
+                if y_hasna:
+                    Q2 = pd.np.repeat(qh*qh, nr)
+                    Q2.shape = (y_nc, nr)
+                    Q2[y_miss.T] = 0
+                    uh = self.y_mat_0.dot(qh) / Q2.sum(axis=0)
+                else:
+                    uh = self.y_mat.dot(qh) / sum(qh*qh)
+
+                # Check convergence
+                if pd.np.nansum((th-th_old)**2) < tol:
+                    break
+                it += 1
+                if it >= maxiter:
+                    raise RuntimeError(
+                        "Convergence was not reached in {} iterations for component {}".format(
+                            maxiter, comp
+                        )
+                    )
+
+            # Calculate X loadings and rescale the scores and weights
+            if x_hasna:
+                T2 = pd.np.repeat(th*th, x_nc)
+                T2.shape = (nr, x_nc)
+                T2[x_miss] = 0
+                ph = self.x_mat_0.T.dot(th) / T2.sum(axis=0)
+            else:
+                ph = self.x_mat.T.dot(th) / sum(th*th)
+            # Normalize
+            # According to Analytica Chimica Acta, 186 (1986) 1-17 this normalization
+            # should be done. However, if so, the results are not the same as th R package
+            # pls plsr method or Evince.
+            # pold_len = math.sqrt(pd.np.nansum(ph*ph))
+            # ph = ph / pold_len
+            # th = th * pold_len
+            # wh = wh * pold_len
+            loadings[:, comp] = ph
+            scores[:, comp] = th
+            u[:, comp] = uh
+            q[:, comp] = qh
+            weights[:, comp] = wh
+            bh = sum(uh*th)/sum(th**2)
+            b[comp] = bh
+
+            self.x_mat = self.x_mat - pd.np.outer(th, ph)
+            self.y_mat = self.y_mat - bh*pd.np.outer(th, qh)
+
+            # Cumulative proportion of variance explained
+            # R2cum[comp] = 1 - (pd.np.nansum(self.x_mat*self.x_mat) / TotalSS)
+
+        # Convert results to DataFrames
+        self.scores = pd.DataFrame(scores, index=self.x_df.index, columns=["PC{}".format(i+1) for i in range(ncomp)])
+        self.loadings = pd.DataFrame(loadings, index=self.x_df.columns, columns=["PC{}".format(i+1) for i in range(ncomp)])
+        self.u = pd.DataFrame(u, index=self.x_df.index, columns=["PC{}".format(i+1) for i in range(ncomp)])
+        self.q = pd.DataFrame(q, index=self.y_df.columns, columns=["PC{}".format(i+1) for i in range(ncomp)])
+        self.weights = pd.DataFrame(weights, index=self.x_df.columns, columns=["PC{}".format(i+1) for i in range(ncomp)])
+        self.b = pd.Series(b, index=["PC{}".format(i+1) for i in range(ncomp)])
+        return True
+
+
 class Nipals(object):
     """A Nipals class that can be used for PCA.
 
