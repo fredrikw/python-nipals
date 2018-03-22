@@ -7,6 +7,166 @@ import pandas as pd
 from scipy.stats import f
 
 
+def formatval(v):
+    return v if (isinstance(v, str) or int(v) != v) else int(v)
+
+
+def _plot(
+    modelinstance,
+    comps=['PC1', 'PC2'],
+    classlevels=None,
+    markers=None,
+    classcolors=None,
+    msize=100,
+    figsize=(12,8),
+    plotpred=True,
+    predsize=None,
+    predlevels=None,
+    predcolors=None,
+    predmarkers=None,
+    labels=None,
+    predlabels=None,
+    textsize=10
+):
+    """Plot method for plotting scores, with optional classes and predictions"""
+    if not markers:
+        markers = ['s', '^', 'v', 'o', '<', '>', 'D', 'p']
+    if classlevels:
+        if not classcolors:
+            classcolors = [str(f) for f in pd.np.linspace(0,1,len(classlevels)+1)[1:]]
+        ax = modelinstance.scores.xs(1, level=classlevels[0]).plot(
+            kind='scatter',
+            x=comps[0], y=comps[1], figsize=figsize, s=msize,
+            marker=markers[0], edgecolor='black', linewidth='1', c=classcolors[0])
+        for i, lev in enumerate(classlevels[1:]):
+            modelinstance.scores.xs(1, level=lev).plot(
+                kind='scatter',
+                x=comps[0], y=comps[1], s=msize,
+                marker=markers[i+1], c=classcolors[i+1],
+                edgecolor='black', linewidth='1', ax=ax, grid=True
+            )
+    else:
+        ax = modelinstance.scores.plot(
+            kind='scatter',
+            x=comps[0], y=comps[1], figsize=figsize, s=msize,
+            marker=markers[0], edgecolor='black', linewidth='1', c='#555555', grid=True)
+    el = simpleEllipse(modelinstance.scores[comps[0]], modelinstance.scores[comps[1]], 0.95, 200)
+    if labels:
+        _ = modelinstance.scores.reset_index(labels).apply(lambda row: ax.annotate(
+            row[labels], (row[comps[0]], row[comps[1]]),
+            xytext=(10,-5),
+            textcoords='offset points',
+            size=textsize,
+            color='black'
+        ), axis=1)
+    ax.plot(el[0], el[1], color='black', linewidth=1)
+    ax.axvline(x=0, ls='-', color='black', linewidth=1)
+    ax.axhline(y=0, ls='-', color='black', linewidth=1)
+    if plotpred and hasattr(modelinstance, 'pred'):
+        predsize = predsize or msize * 2
+        predmarkers = predmarkers or markers
+        try:
+            predcolors = predcolors or ['C{}'.format(c+1) for c in range(len(predlevels))]
+        except TypeError:
+            predcolors = ['C1']
+        if predlevels:
+            for lev in range(len(predlevels)):
+                try:
+                    modelinstance.pred.xs(1, level=predlevels[lev]).plot(
+                        kind='scatter',
+                        x=comps[0], y=comps[1], s=predsize,
+                        marker=predmarkers[lev], c=predcolors[lev],
+                        edgecolor='black', linewidth='1', ax=ax, grid=True
+                    )
+                    if not (predlabels is None):
+                        _ = modelinstance.pred.xs(1, level=predlevels[lev]).reset_index(predlabels).rename(
+                            columns={'index': 'level_0'}
+                        ).apply(lambda row: ax.annotate(
+                            row[
+                                'level_{}'.format(predlabels) if 0 == predlabels else predlabels
+                            ],
+                            (row[comps[0]], row[comps[1]]),
+                            xytext=(10,-5),
+                            textcoords='offset points',
+                            size=textsize * (2 if predsize is None else (predsize / msize)),
+                            color='black'
+                        ), axis=1)
+                except (KeyError, ValueError, IndexError):
+                    logging.warning(
+                        "Tried to plot prediction data for class {}, but failed. "
+                        "Probably there are no datapoints with that class.".format(
+                            predlevels[lev]
+                        ))
+                    raise
+        else:
+            modelinstance.pred.plot(
+                kind='scatter',
+                x=comps[0], y=comps[1], s=predsize,
+                marker=predmarkers[0], c=predcolors[0],
+                edgecolor='black', linewidth='1', ax=ax, grid=True
+            )
+            if not (predlabels is None):
+                _ = modelinstance.pred.reset_index(predlabels).rename(
+                    columns={'index': 'level_0'}
+                ).apply(lambda row: ax.annotate(
+                    formatval(row[
+                        'level_{}'.format(predlabels) if 0 == predlabels else predlabels
+                    ]),
+                    (row[comps[0]], row[comps[1]]),
+                    xytext=(10,-5),
+                    textcoords='offset points',
+                    size=textsize * (2 if predsize is None else (predsize / msize)),
+                    color='black'
+                ), axis=1)
+    return ax.figure
+
+def _loadingsplot(
+    modelinstance,
+    comps=['PC1', 'PC2'],
+    markers=None,
+    color='0.7',
+    msize=100,
+    figsize=(12,8),
+    showweights=True,
+    weightmarkers=None,
+    weightcolors=None,
+    weightsize=200,
+    labels=True,
+    textsize=10
+):
+    """Plot method for plotting loadings"""
+    ax = modelinstance.weights.plot(
+        kind='scatter', x=comps[0], y=comps[1], figsize=figsize, s=msize,
+        c=color, edgecolor='black', grid=True, zorder=1
+    )
+    if labels:
+        _ = modelinstance.weights.apply(lambda row: ax.annotate(
+            row.name, (row[comps[0]], row[comps[1]]),
+            xytext=(10,-5),
+            textcoords='offset points',
+            size=textsize,
+            color='black',
+            zorder=2
+        ), axis=1)
+    if showweights:
+        _ = modelinstance.q.plot(
+            kind='scatter', x=comps[0], y=comps[1], s=weightsize,
+            c=weightcolors or 'blue', edgecolor='black', grid=True, zorder=3, ax=ax
+        )
+        if labels:
+            _ = modelinstance.q.apply(lambda row: ax.annotate(
+                row.name, (row[comps[0]], row[comps[1]]),
+                xytext=(10,-5),
+                textcoords='offset points',
+                size=textsize * weightsize / msize,
+                color='black',
+                zorder=4
+            ), axis=1)
+    ax.axvline(x=0, ls='-', color='black', linewidth=1)
+    ax.axhline(y=0, ls='-', color='black', linewidth=1)
+    return ax.figure
+
+
 def simpleEllipse(x, y, alfa, length):
     """Helper function to calculate Hotelling's ellipse from scores
     Ported from the bioconductor package pcaMethods, https://doi.org/doi:10.18129/B9.bioc.pcaMethods
@@ -206,6 +366,59 @@ class PLS(object):
         self.b = pd.Series(b, index=["PC{}".format(i+1) for i in range(ncomp)])
         return True
 
+    def plot(
+        self,
+        comps=['PC1', 'PC2'],
+        classlevels=None,
+        markers=None,
+        classcolors=None,
+        msize=100,
+        figsize=(12,8),
+        plotpred=True,
+        predsize=None,
+        predlevels=None,
+        predcolors=None,
+        predmarkers=None,
+        labels=None,
+        predlabels=None
+    ):
+        """Plot method for plotting scores, with optional classes and predictions"""
+        return _plot(
+            self, comps, classlevels, markers, classcolors, msize,
+            figsize, plotpred, predsize, predlevels, predcolors, predmarkers,
+            labels, predlabels
+        )
+
+    def loadingsplot(
+        self,
+        comps=['PC1', 'PC2'],
+        markers=None,
+        color='0.7',
+        msize=100,
+        figsize=(12,8),
+        showweights=True,
+        weightmarkers=None,
+        weightcolors=None,
+        weightsize=200,
+        labels=True,
+        textsize=10
+    ):
+        """Plot method for plotting loadings and optionally weights"""
+        return _loadingsplot(
+            modelinstance=self,
+            comps=comps,
+            markers=markers,
+            color=color,
+            msize=msize,
+            figsize=figsize,
+            showweights=showweights,
+            weightmarkers=weightmarkers,
+            weightcolors=weightcolors,
+            weightsize=weightsize,
+            labels=labels,
+            textsize=textsize
+        )
+
 
 class Nipals(object):
     """A Nipals class that can be used for PCA.
@@ -217,6 +430,9 @@ class Nipals(object):
         if type(x_df) != pd.core.frame.DataFrame:
             x_df = pd.DataFrame(x_df)
         self.x_df = x_df
+        # Make sure data is numeric
+        self.x_df = x_df.astype('float')
+
 
     def fit(
         self,
@@ -399,65 +615,17 @@ class Nipals(object):
         predsize=None,
         predlevels=None,
         predcolors=None,
-        predmarkers=None
+        predmarkers=None,
+        labels=None,
+        predlabels=None,
+        textsize=10
     ):
         """Plot method for plotting scores, with optional classes and predictions"""
-        if not markers:
-            markers = ['s', '^', 'v', 'o', '<', '>', 'D', 'p']
-        if classlevels:
-            if not classcolors:
-                classcolors = [str(f) for f in pd.np.linspace(0,1,len(classlevels)+1)[1:]]
-            ax = self.scores.xs(1, level=classlevels[0]).plot(
-                kind='scatter',
-                x=comps[0], y=comps[1], figsize=figsize, s=msize,
-                marker=markers[0], edgecolor='black', linewidth='1', c=classcolors[0])
-            for i, lev in enumerate(classlevels[1:]):
-                self.scores.xs(1, level=lev).plot(
-                    kind='scatter',
-                    x=comps[0], y=comps[1], s=msize,
-                    marker=markers[i+1], c=classcolors[i+1],
-                    edgecolor='black', linewidth='1', ax=ax, grid=True
-                )
-        else:
-            ax = self.scores.plot(
-                kind='scatter',
-                x=comps[0], y=comps[1], figsize=figsize, s=msize,
-                marker=markers[0], edgecolor='black', linewidth='1', c='#555555', grid=True)
-        el = simpleEllipse(self.scores[comps[0]], self.scores[comps[1]], 0.95, 200)
-        ax.plot(el[0], el[1], color='black', linewidth=1)
-        ax.axvline(x=0, ls='-', color='black', linewidth=1)
-        ax.axhline(y=0, ls='-', color='black', linewidth=1)
-        if plotpred and hasattr(self, 'pred'):
-            predsize = predsize or msize * 2
-            predmarkers = predmarkers or markers
-            try:
-                predcolors = predcolors or ['C{}'.format(c+1) for c in range(len(predlevels))]
-            except TypeError:
-                predcolors = ['C1']
-            if predlevels:
-                for lev in range(len(predlevels)):
-                    try:
-                        self.pred.xs(1, level=predlevels[lev]).plot(
-                            kind='scatter',
-                            x=comps[0], y=comps[1], s=predsize,
-                            marker=predmarkers[lev], c=predcolors[lev],
-                            edgecolor='black', linewidth='1', ax=ax, grid=True
-                        )
-                    except (KeyError, ValueError, IndexError):
-                        logging.warning(
-                            "Tried to plot prediction data for class {}, but failed. "
-                            "Probably there are no datapoints with that class.".format(
-                                predlevels[lev]
-                            ))
-                        raise
-            else:
-                self.pred.plot(
-                    kind='scatter',
-                    x=comps[0], y=comps[1], s=predsize,
-                    marker=predmarkers[0], c=predcolors[0],
-                    edgecolor='black', linewidth='1', ax=ax, grid=True
-                )
-        return ax.figure
+        return _plot(
+            self, comps, classlevels, markers, classcolors, msize,
+            figsize, plotpred, predsize, predlevels, predcolors, predmarkers,
+            labels, predlabels, textsize
+        )
 
     def predict(self, new_x):
         self.new_x = (new_x - self.x_mean) / self.x_std

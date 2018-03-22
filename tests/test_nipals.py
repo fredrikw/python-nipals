@@ -208,6 +208,26 @@ def test_pred_plot():
     assert isinstance(plt, matplotlib.figure.Figure)
     return plt
 
+def test_plot_labels():
+    nip = nipals.Nipals(testdata_class)
+    nip.fit(ncomp=2)
+    nip.predict(pd.DataFrame([[63, 70, 98, 110, 124],
+        [51, 82, 102, 110, 108]], index=['a', 'b']))
+    plt = nip.plot(classlevels=['C1','C2'], plotpred=True, labels='C1', predlabels=0)
+    assert isinstance(plt, matplotlib.figure.Figure)
+    return plt
+
+def test_pred_plot_labels():
+    nip = nipals.Nipals(testdata_class)
+    nip.fit(ncomp=2)
+    nip.predict(pd.DataFrame([
+        [63, 70, 98, 110, 124, 0, 1, 0],
+        [51, 82, 102, 110, 108, 1, 0, 0]
+    ], index=['a', 'b']).set_index([5,6,7], append=True))
+    plt = nip.plot(classlevels=['C1','C2'], plotpred=True, labels='C1', predlevels=[5,6], predlabels=0)
+    assert isinstance(plt, matplotlib.figure.Figure)
+    return plt
+
 def test_pred_plot_options():
     nip = nipals.Nipals(testdata_class)
     nip.fit(ncomp=2)
@@ -285,3 +305,31 @@ def test_pls_missing_y():
     pls = nipals.PLS(oliveoil_missing_y.iloc[:, :5], oliveoil_missing_y.iloc[:, 5:])
     assert pls.fit(ncomp=2)
     pd.np.testing.assert_almost_equal(pls.scores.values, oliveoil_missing_y_scores * [-1, 1], 3)
+
+def test_pls_score_plot():
+    pls = nipals.PLS(oliveoil_missing_y.iloc[:, :5], oliveoil_missing_y.iloc[:, 5:])
+    assert pls.fit(ncomp=2)
+    plt = pls.plot()
+    assert isinstance(plt, matplotlib.figure.Figure)
+    return plt
+
+def test_pls_load_plot():
+    pls = nipals.PLS(oliveoil_missing_y.iloc[:, :5], oliveoil_missing_y.iloc[:, 5:])
+    assert pls.fit(ncomp=2)
+    plt = pls.loadingsplot()
+    assert isinstance(plt, matplotlib.figure.Figure)
+    return plt
+
+def test_pls_load_plot_no_y():
+    pls = nipals.PLS(oliveoil_missing_y.iloc[:, :5], oliveoil_missing_y.iloc[:, 5:])
+    assert pls.fit(ncomp=2)
+    plt = pls.loadingsplot(showweights=False)
+    assert isinstance(plt, matplotlib.figure.Figure)
+    return plt
+
+def test_pls_load_plot_without_labels():
+    pls = nipals.PLS(oliveoil_missing_y.iloc[:, :5], oliveoil_missing_y.iloc[:, 5:])
+    assert pls.fit(ncomp=2)
+    plt = pls.loadingsplot(labels=False)
+    assert isinstance(plt, matplotlib.figure.Figure)
+    return plt
