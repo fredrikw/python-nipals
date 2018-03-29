@@ -44,6 +44,9 @@ oliveoil_scores = pd.read_csv("tests/oliveoil_scores.csv", index_col=0)
 oliveoil_missing_y = pd.read_csv("tests/oliveoil_miss.csv", index_col=0)
 oliveoil_missing_y_scores = pd.read_csv("tests/oliveoil_miss_scores.csv", index_col=0)
 
+# Set matplotlib backend to allow for headless testing
+matplotlib.use('Agg')
+
 
 def test_init_from_df():
     # It should be possible to init a nipals class from a Pandas DataFrame
