@@ -12,16 +12,13 @@ matrix:
   include:
     - python: '2.7'
       env:
-        - TOXENV=py27,report,codecov
+        - TOXENV=py27
     - python: '3.5'
       env:
-        - TOXENV=py35,report,codecov
+        - TOXENV=py35
     - python: '3.6'
       env:
-        - TOXENV=py36,report,codecov
-    - python: 'pypy-5.4'
-      env:
-        - TOXENV=pypy,report,codecov
+        - TOXENV=py36,report,codecov,check
 before_install:
   - python --version
   - uname -a
