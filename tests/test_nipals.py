@@ -1,7 +1,6 @@
 import logging
 
 import matplotlib
-
 import pandas as pd
 import pytest
 
@@ -36,7 +35,7 @@ yarn = pd.read_csv("tests/yarn.csv", index_col=0)
 yarn_scores = pd.read_csv("tests/yarn_scores.csv", index_col=0).values
 yarn_loadings = pd.read_csv("tests/yarn_loadings.csv", index_col=0).values
 yarn_weights = pd.read_csv("tests/yarn_weights.csv", index_col=0).values
-yarn_missing_scores = pd.read_csv("tests/yarn_missing_scores.csv", index_col=0, usecols=[0,2,3,4]).values
+yarn_missing_scores = pd.read_csv("tests/yarn_missing_scores.csv", index_col=0, usecols=[0, 2, 3, 4]).values
 yarn_missing_loadings = pd.read_csv("tests/yarn_missing_loadings.csv", index_col=0).values
 yarn_missing_weights = pd.read_csv("tests/yarn_missing_weights.csv", index_col=0).values
 
@@ -44,6 +43,7 @@ oliveoil = pd.read_csv("tests/oliveoil.csv", index_col=0)
 oliveoil_scores = pd.read_csv("tests/oliveoil_scores.csv", index_col=0)
 oliveoil_missing_y = pd.read_csv("tests/oliveoil_miss.csv", index_col=0)
 oliveoil_missing_y_scores = pd.read_csv("tests/oliveoil_miss_scores.csv", index_col=0)
+
 
 def test_init_from_df():
     # It should be possible to init a nipals class from a Pandas DataFrame
@@ -136,6 +136,7 @@ def test_run_pca_with_prescaled_data():
     assert nip.fit(center=False, scale=False, ncomp=2)
     pd.np.testing.assert_almost_equal(list(nip.eig), [5.020518433605, 1.879323465996])
 
+
 def test_run_pca_check_scores_with_sweep():
     nip = nipals.Nipals(testdata)
     assert nip.fit(ncomp=2, eigsweep=True, startcol=1)
@@ -149,34 +150,52 @@ def test_run_pca_check_scores_with_sweep():
         [0.5982563, 0.3647261],
     ], 3)
 
+
 def test_run_pca_check_scores():
     nip = nipals.Nipals(testdata)
     assert nip.fit(ncomp=2)
     pd.np.testing.assert_almost_equal(nip.scores.values, [
-        [-2.72332498,  0.25021637],
-        [-1.85369271,  0.34827344],
-        [-0.98854112,  0.64658032],
+        [-2.72332498, 0.25021637],
+        [-1.85369271, 0.34827344],
+        [-0.98854112, 0.64658032],
         [-0.16429534, -1.41375825],
-        [ 0.62686116, -0.92008715],
-        [ 1.7370958, -0.41837244],
-        [ 2.91721621,  0.746181]
+        [0.62686116, -0.92008715],
+        [1.7370958, -0.41837244],
+        [2.91721621, 0.746181]
     ])
+
 
 def test_predict_from_pca():
     nip = nipals.Nipals(testdata)
     nip.fit(ncomp=2)
-    assert nip.predict(pd.DataFrame([[63, 70, 98, 110, 124],
-        [51, 82, 102, 110, 108]]))
-    pd.np.testing.assert_almost_equal(nip.pred.values, [[-1.4465766,  0.4500705],
-        [-1.6229739, -0.340578 ]])
+    assert nip.predict(pd.DataFrame([
+        [63, 70, 98, 110, 124],
+        [51, 82, 102, 110, 108]
+    ]))
+    pd.np.testing.assert_almost_equal(
+        nip.pred.values,
+        [
+            [-1.4465766,  0.4500705],
+            [-1.6229739, -0.340578]
+        ]
+    )
+
 
 def test_predict_from_pca_with_sweep():
     nip = nipals.Nipals(testdata)
     nip.fit(ncomp=2, eigsweep=True)
-    assert nip.predict(pd.DataFrame([[63, 70, 98, 110, 124],
-        [51, 82, 102, 110, 108]]))
-    pd.np.testing.assert_almost_equal(nip.pred.values, [[-0.2966596,  0.2201614],
-        [-0.3328347, -0.1666008]])
+    assert nip.predict(pd.DataFrame([
+        [63, 70, 98, 110, 124],
+        [51, 82, 102, 110, 108]
+    ]))
+    pd.np.testing.assert_almost_equal(
+        nip.pred.values,
+        [
+            [-0.2966596, 0.2201614],
+            [-0.3328347, -0.1666008]
+        ]
+    )
+
 
 def test_plot():
     nip = nipals.Nipals(testdata)
@@ -185,37 +204,46 @@ def test_plot():
     assert isinstance(plt, matplotlib.figure.Figure)
     return plt
 
+
 def test_plot_classes():
     nip = nipals.Nipals(testdata_class)
     nip.fit(ncomp=2)
-    plt = nip.plot(classlevels=['C1','C2'])
+    plt = nip.plot(classlevels=['C1', 'C2'])
     assert isinstance(plt, matplotlib.figure.Figure)
     return plt
+
 
 def test_plot_classoptions():
     nip = nipals.Nipals(testdata_class)
     nip.fit(ncomp=2)
-    plt = nip.plot(classlevels=['C1','C2'], markers=['s', 'o'], classcolors=['red', 'black'])
+    plt = nip.plot(classlevels=['C1', 'C2'], markers=['s', 'o'], classcolors=['red', 'black'])
     assert isinstance(plt, matplotlib.figure.Figure)
     return plt
+
 
 def test_pred_plot():
     nip = nipals.Nipals(testdata_class)
     nip.fit(ncomp=2)
-    nip.predict(pd.DataFrame([[63, 70, 98, 110, 124],
-        [51, 82, 102, 110, 108]]))
-    plt = nip.plot(classlevels=['C1','C2'], plotpred=True)
+    nip.predict(pd.DataFrame([
+        [63, 70, 98, 110, 124],
+        [51, 82, 102, 110, 108]
+    ]))
+    plt = nip.plot(classlevels=['C1', 'C2'], plotpred=True)
     assert isinstance(plt, matplotlib.figure.Figure)
     return plt
+
 
 def test_plot_labels():
     nip = nipals.Nipals(testdata_class)
     nip.fit(ncomp=2)
-    nip.predict(pd.DataFrame([[63, 70, 98, 110, 124],
-        [51, 82, 102, 110, 108]], index=['a', 'b']))
-    plt = nip.plot(classlevels=['C1','C2'], plotpred=True, labels='C1', predlabels=0)
+    nip.predict(pd.DataFrame([
+        [63, 70, 98, 110, 124],
+        [51, 82, 102, 110, 108]
+    ], index=['a', 'b']))
+    plt = nip.plot(classlevels=['C1', 'C2'], plotpred=True, labels='C1', predlabels=0)
     assert isinstance(plt, matplotlib.figure.Figure)
     return plt
+
 
 def test_pred_plot_labels():
     nip = nipals.Nipals(testdata_class)
@@ -223,10 +251,11 @@ def test_pred_plot_labels():
     nip.predict(pd.DataFrame([
         [63, 70, 98, 110, 124, 0, 1, 0],
         [51, 82, 102, 110, 108, 1, 0, 0]
-    ], index=['a', 'b']).set_index([5,6,7], append=True))
-    plt = nip.plot(classlevels=['C1','C2'], plotpred=True, labels='C1', predlevels=[5,6], predlabels=0)
+    ], index=['a', 'b']).set_index([5, 6, 7], append=True))
+    plt = nip.plot(classlevels=['C1', 'C2'], plotpred=True, labels='C1', predlevels=[5, 6], predlabels=0)
     assert isinstance(plt, matplotlib.figure.Figure)
     return plt
+
 
 def test_pred_plot_options():
     nip = nipals.Nipals(testdata_class)
@@ -234,12 +263,13 @@ def test_pred_plot_options():
     nip.predict(pd.DataFrame([
         [63, 70, 98, 110, 124, 0, 1, 0],
         [51, 82, 102, 110, 108, 1, 0, 0]
-    ]).set_index([5,6,7], append=True))
+    ]).set_index([5, 6, 7], append=True))
     with pytest.raises(KeyError):
-        plt = nip.plot(classlevels=['C1','C2'], plotpred=True, predlevels=[5,7])
-    plt = nip.plot(classlevels=['C1','C2'], plotpred=True, predlevels=[5,6])
+        plt = nip.plot(classlevels=['C1', 'C2'], plotpred=True, predlevels=[5, 7])
+    plt = nip.plot(classlevels=['C1', 'C2'], plotpred=True, predlevels=[5, 6])
     assert isinstance(plt, matplotlib.figure.Figure)
     return plt
+
 
 def test_loadings_plot():
     nip = nipals.Nipals(testdata_class)
@@ -248,41 +278,46 @@ def test_loadings_plot():
     assert isinstance(plt, matplotlib.figure.Figure)
     return plt
 
+
 def test_pls():
-    pls = nipals.PLS(yarn.iloc[:,:268], yarn.iloc[:, 268])
+    pls = nipals.PLS(yarn.iloc[:, :268], yarn.iloc[:, 268])
     assert pls.fit(ncomp=6, scale=False)
     pd.np.testing.assert_almost_equal(pls.scores.values, yarn_scores)
     pd.np.testing.assert_almost_equal(pls.loadings.values, yarn_loadings)
     pd.np.testing.assert_almost_equal(pls.weights.values, yarn_weights)
 
+
 def test_pls_nocenter_and_scale():
-    pls = nipals.PLS(yarn.iloc[:,:268] - yarn.iloc[:,:268].mean(), yarn.iloc[:, 268])
+    pls = nipals.PLS(yarn.iloc[:, :268] - yarn.iloc[:, :268].mean(), yarn.iloc[:, 268])
     assert pls.fit(ncomp=6, scale=False, center=False)
     pd.np.testing.assert_almost_equal(pls.scores.values, yarn_scores)
     pd.np.testing.assert_almost_equal(pls.loadings.values, yarn_loadings)
     pd.np.testing.assert_almost_equal(pls.weights.values, yarn_weights)
 
+
 def test_pls_missing_x():
-    tmpx = yarn.iloc[:,:268]
+    tmpx = yarn.iloc[:, :268]
     csel = [171, 107, 222, 150, 76, 205, 63, 19, 121, 183]
     rsel = [23, 0, 3, 22, 15, 21, 19, 7, 19, 5]
     for r, c in zip(rsel, csel):
-        tmpx.iloc[r,c] = pd.np.nan
+        tmpx.iloc[r, c] = pd.np.nan
     pls = nipals.PLS(tmpx, yarn.iloc[:, 268])
     assert pls.fit(ncomp=3)
     pd.np.testing.assert_almost_equal(pls.scores.values, yarn_missing_scores, 5)
     pd.np.testing.assert_almost_equal(pls.loadings.values, yarn_missing_loadings)
     pd.np.testing.assert_almost_equal(pls.weights.values, yarn_missing_weights)
 
+
 def test_pls_nondf():
-    pls = nipals.PLS(yarn.iloc[:,:268].values, yarn.iloc[:, 268].values)
+    pls = nipals.PLS(yarn.iloc[:, :268].values, yarn.iloc[:, 268].values)
     assert pls.fit(ncomp=6, scale=False)
     pd.np.testing.assert_almost_equal(pls.scores.values, yarn_scores)
     pd.np.testing.assert_almost_equal(pls.loadings.values, yarn_loadings)
     pd.np.testing.assert_almost_equal(pls.weights.values, yarn_weights)
 
+
 def test_pls_optionvariations(caplog):
-    pls = nipals.PLS(yarn.iloc[:,:268], yarn.iloc[:, 268])
+    pls = nipals.PLS(yarn.iloc[:, :268], yarn.iloc[:, 268])
     assert pls.fit()
     assert pls.fit(ncomp=500, startcol=0)
     assert caplog.record_tuples == [
@@ -296,15 +331,18 @@ def test_pls_optionvariations(caplog):
     with pytest.raises(RuntimeError):
         pls.fit(maxiter=1)
 
+
 def test_pls_multiy():
     pls = nipals.PLS(oliveoil.iloc[:, :5], oliveoil.iloc[:, 5:])
     assert pls.fit(ncomp=2)
     pd.np.testing.assert_almost_equal(pls.scores.values, oliveoil_scores * [-1, 1], 4)
 
+
 def test_pls_missing_y():
     pls = nipals.PLS(oliveoil_missing_y.iloc[:, :5], oliveoil_missing_y.iloc[:, 5:])
     assert pls.fit(ncomp=2)
     pd.np.testing.assert_almost_equal(pls.scores.values, oliveoil_missing_y_scores * [-1, 1], 3)
+
 
 def test_pls_score_plot():
     pls = nipals.PLS(oliveoil_missing_y.iloc[:, :5], oliveoil_missing_y.iloc[:, 5:])
@@ -313,6 +351,7 @@ def test_pls_score_plot():
     assert isinstance(plt, matplotlib.figure.Figure)
     return plt
 
+
 def test_pls_load_plot():
     pls = nipals.PLS(oliveoil_missing_y.iloc[:, :5], oliveoil_missing_y.iloc[:, 5:])
     assert pls.fit(ncomp=2)
@@ -320,12 +359,14 @@ def test_pls_load_plot():
     assert isinstance(plt, matplotlib.figure.Figure)
     return plt
 
+
 def test_pls_load_plot_no_y():
     pls = nipals.PLS(oliveoil_missing_y.iloc[:, :5], oliveoil_missing_y.iloc[:, 5:])
     assert pls.fit(ncomp=2)
     plt = pls.loadingsplot(showweights=False)
     assert isinstance(plt, matplotlib.figure.Figure)
     return plt
+
 
 def test_pls_load_plot_without_labels():
     pls = nipals.PLS(oliveoil_missing_y.iloc[:, :5], oliveoil_missing_y.iloc[:, 5:])

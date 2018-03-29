@@ -3,7 +3,6 @@ import logging
 import math
 
 import pandas as pd
-
 from scipy.stats import f
 
 
@@ -18,7 +17,7 @@ def _plot(
     markers=None,
     classcolors=None,
     msize=100,
-    figsize=(12,8),
+    figsize=(12, 8),
     plotpred=True,
     predsize=None,
     predlevels=None,
@@ -33,7 +32,7 @@ def _plot(
         markers = ['s', '^', 'v', 'o', '<', '>', 'D', 'p']
     if classlevels:
         if not classcolors:
-            classcolors = [str(f) for f in pd.np.linspace(0,1,len(classlevels)+1)[1:]]
+            classcolors = [str(f) for f in pd.np.linspace(0, 1, len(classlevels)+1)[1:]]
         ax = modelinstance.scores.xs(1, level=classlevels[0]).plot(
             kind='scatter',
             x=comps[0], y=comps[1], figsize=figsize, s=msize, zorder=3,
@@ -52,9 +51,9 @@ def _plot(
             marker=markers[0], edgecolor='black', linewidth='1', c='#555555', grid=True)
     el = simpleEllipse(modelinstance.scores[comps[0]], modelinstance.scores[comps[1]], 0.95, 200)
     if labels:
-        _ = modelinstance.scores.reset_index(labels).apply(lambda row: ax.annotate(
+        modelinstance.scores.reset_index(labels).apply(lambda row: ax.annotate(
             row[labels], (row[comps[0]], row[comps[1]]),
-            xytext=(10,-5),
+            xytext=(10, -5),
             textcoords='offset points',
             size=textsize,
             color='black',
@@ -80,14 +79,14 @@ def _plot(
                         edgecolor='black', linewidth='1', ax=ax, grid=True
                     )
                     if not (predlabels is None):
-                        _ = modelinstance.pred.xs(1, level=predlevels[lev]).reset_index(predlabels).rename(
+                        modelinstance.pred.xs(1, level=predlevels[lev]).reset_index(predlabels).rename(
                             columns={'index': 'level_0'}
                         ).apply(lambda row: ax.annotate(
                             row[
                                 'level_{}'.format(predlabels) if 0 == predlabels else predlabels
                             ],
                             (row[comps[0]], row[comps[1]]),
-                            xytext=(10,-5),
+                            xytext=(10, -5),
                             textcoords='offset points',
                             size=textsize * (2 if predsize is None else (predsize / msize)),
                             color='black',
@@ -108,14 +107,14 @@ def _plot(
                 edgecolor='black', linewidth='1', ax=ax, grid=True
             )
             if not (predlabels is None):
-                _ = modelinstance.pred.reset_index(predlabels).rename(
+                modelinstance.pred.reset_index(predlabels).rename(
                     columns={'index': 'level_0'}
                 ).apply(lambda row: ax.annotate(
                     formatval(row[
                         'level_{}'.format(predlabels) if 0 == predlabels else predlabels
                     ]),
                     (row[comps[0]], row[comps[1]]),
-                    xytext=(10,-5),
+                    xytext=(10, -5),
                     textcoords='offset points',
                     size=textsize * (2 if predsize is None else (predsize / msize)),
                     color='black',
@@ -123,13 +122,14 @@ def _plot(
                 ), axis=1)
     return ax.figure
 
+
 def _loadingsplot(
     modelinstance,
     comps=['PC1', 'PC2'],
     markers=None,
     color='0.7',
     msize=100,
-    figsize=(12,8),
+    figsize=(12, 8),
     showweights=True,
     weightmarkers=None,
     weightcolors=None,
@@ -149,7 +149,7 @@ def _loadingsplot(
     if labels:
         _loadings.apply(lambda row: ax.annotate(
             row.name, (row[comps[0]], row[comps[1]]),
-            xytext=(10,-5),
+            xytext=(10, -5),
             textcoords='offset points',
             size=textsize,
             color='black',
@@ -173,9 +173,9 @@ def _loadingsplot(
                     edgecolor='k', zorder=5
                 )
         if labels:
-            _ = modelinstance.q.apply(lambda row: ax.annotate(
+            modelinstance.q.apply(lambda row: ax.annotate(
                 row.name, (row[comps[0]], row[comps[1]]),
-                xytext=(10,-5),
+                xytext=(10, -5),
                 textcoords='offset points',
                 size=textsize * weightsize / msize,
                 color='black',
@@ -255,13 +255,13 @@ class PLS(object):
             self.y_std = pd.np.nanstd(self.y_mat, axis=0, ddof=1)
             self.y_mat = self.y_mat / self.y_std
 
-        TotalSSX = pd.np.nansum(self.x_mat*self.x_mat)
-        TotalSSY = pd.np.nansum(self.y_mat*self.y_mat)
+        # TotalSSX = pd.np.nansum(self.x_mat*self.x_mat)
+        # TotalSSY = pd.np.nansum(self.y_mat*self.y_mat)
         nr, x_nc = self.x_mat.shape
         y_nc = self.y_mat.shape[1]
         # initialize outputs
-        eig = pd.np.empty((ncomp,))
-        R2cum = pd.np.empty((ncomp,))
+        # eig = pd.np.empty((ncomp,))
+        # R2cum = pd.np.empty((ncomp,))
         loadings = pd.np.empty((x_nc, ncomp))
         scores = pd.np.empty((nr, ncomp))
         u = pd.np.empty((nr, ncomp))
@@ -399,7 +399,7 @@ class PLS(object):
         markers=None,
         classcolors=None,
         msize=100,
-        figsize=(12,8),
+        figsize=(12, 8),
         plotpred=True,
         predsize=None,
         predlevels=None,
@@ -421,7 +421,7 @@ class PLS(object):
         markers=None,
         color='0.7',
         msize=100,
-        figsize=(12,8),
+        figsize=(12, 8),
         showweights=True,
         weightmarkers=None,
         weightcolors=None,
@@ -619,7 +619,7 @@ class Nipals(object):
         self,
         comps=['PC1', 'PC2'],
         msize=100,
-        figsize=(12,8),
+        figsize=(12, 8),
     ):
         """Plot method for plotting loadings"""
         return _loadingsplot(
@@ -644,7 +644,7 @@ class Nipals(object):
         markers=None,
         classcolors=None,
         msize=100,
-        figsize=(12,8),
+        figsize=(12, 8),
         plotpred=True,
         predsize=None,
         predlevels=None,
