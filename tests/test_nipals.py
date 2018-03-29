@@ -341,3 +341,26 @@ def test_pls_load_plot_with_markers():
     plt = pls.loadingsplot(weightmarkers=['s', 'o', 'v', '^', '+', '3'])
     assert isinstance(plt, matplotlib.figure.Figure)
     return plt
+
+
+def test_inf_values_in_dfs(caplog):
+    olive_inf = oliveoil.replace([18.7, 75.1], pd.np.inf)
+    nipals.Nipals(olive_inf)
+    nipals.PLS(olive_inf.iloc[:, :5], olive_inf.iloc[:, 5:])
+    assert caplog.record_tuples == [
+        (
+            'root',
+            logging.WARNING,
+            'Data contained infinite values, converting to missing values'
+        ),
+        (
+            'root',
+            logging.WARNING,
+            'X data contained infinite values, converting to missing values'
+        ),
+        (
+            'root',
+            logging.WARNING,
+            'Y data contained infinite values, converting to missing values'
+        ),
+    ]

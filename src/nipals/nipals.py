@@ -214,6 +214,13 @@ class PLS(object):
         # Make sure data is numeric
         self.x_df = x_df.astype('float')
         self.y_df = y_df.astype('float')
+        # Check for and remove infs
+        if pd.np.isinf(self.x_df).any().any():
+            logging.warning("X data contained infinite values, converting to missing values")
+            self.x_df.replace([pd.np.inf, -pd.np.inf], pd.np.nan, inplace=True)
+        if pd.np.isinf(self.y_df).any().any():
+            logging.warning("Y data contained infinite values, converting to missing values")
+            self.y_df.replace([pd.np.inf, -pd.np.inf], pd.np.nan, inplace=True)
 
     def fit(
         self,
@@ -451,7 +458,10 @@ class Nipals(object):
         self.x_df = x_df
         # Make sure data is numeric
         self.x_df = x_df.astype('float')
-
+        # Check for and remove infs
+        if pd.np.isinf(self.x_df).any().any():
+            logging.warning("Data contained infinite values, converting to missing values")
+            self.x_df.replace([pd.np.inf, -pd.np.inf], pd.np.nan, inplace=True)
 
     def fit(
         self,
