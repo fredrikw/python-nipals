@@ -333,3 +333,11 @@ def test_pls_load_plot_without_labels():
     plt = pls.loadingsplot(labels=False)
     assert isinstance(plt, matplotlib.figure.Figure)
     return plt
+
+
+def test_pls_load_plot_with_markers():
+    pls = nipals.PLS(oliveoil_missing_y.iloc[:, :5], oliveoil_missing_y.iloc[:, 5:])
+    assert pls.fit(ncomp=2)
+    plt = pls.loadingsplot(weightmarkers=['s', 'o', 'v', '^', '+', '3'])
+    assert isinstance(plt, matplotlib.figure.Figure)
+    return plt

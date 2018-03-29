@@ -36,19 +36,19 @@ def _plot(
             classcolors = [str(f) for f in pd.np.linspace(0,1,len(classlevels)+1)[1:]]
         ax = modelinstance.scores.xs(1, level=classlevels[0]).plot(
             kind='scatter',
-            x=comps[0], y=comps[1], figsize=figsize, s=msize,
+            x=comps[0], y=comps[1], figsize=figsize, s=msize, zorder=3,
             marker=markers[0], edgecolor='black', linewidth='1', c=classcolors[0])
         for i, lev in enumerate(classlevels[1:]):
             modelinstance.scores.xs(1, level=lev).plot(
                 kind='scatter',
-                x=comps[0], y=comps[1], s=msize,
+                x=comps[0], y=comps[1], s=msize, zorder=3,
                 marker=markers[i+1], c=classcolors[i+1],
                 edgecolor='black', linewidth='1', ax=ax, grid=True
             )
     else:
         ax = modelinstance.scores.plot(
             kind='scatter',
-            x=comps[0], y=comps[1], figsize=figsize, s=msize,
+            x=comps[0], y=comps[1], figsize=figsize, s=msize, zorder=3,
             marker=markers[0], edgecolor='black', linewidth='1', c='#555555', grid=True)
     el = simpleEllipse(modelinstance.scores[comps[0]], modelinstance.scores[comps[1]], 0.95, 200)
     if labels:
@@ -57,7 +57,8 @@ def _plot(
             xytext=(10,-5),
             textcoords='offset points',
             size=textsize,
-            color='black'
+            color='black',
+            zorder=4
         ), axis=1)
     ax.plot(el[0], el[1], color='black', linewidth=1)
     ax.axvline(x=0, ls='-', color='black', linewidth=1)
@@ -74,7 +75,7 @@ def _plot(
                 try:
                     modelinstance.pred.xs(1, level=predlevels[lev]).plot(
                         kind='scatter',
-                        x=comps[0], y=comps[1], s=predsize,
+                        x=comps[0], y=comps[1], s=predsize, zorder=5,
                         marker=predmarkers[lev], c=predcolors[lev],
                         edgecolor='black', linewidth='1', ax=ax, grid=True
                     )
@@ -89,7 +90,8 @@ def _plot(
                             xytext=(10,-5),
                             textcoords='offset points',
                             size=textsize * (2 if predsize is None else (predsize / msize)),
-                            color='black'
+                            color='black',
+                            zorder=6
                         ), axis=1)
                 except (KeyError, ValueError, IndexError):
                     logging.warning(
@@ -101,7 +103,7 @@ def _plot(
         else:
             modelinstance.pred.plot(
                 kind='scatter',
-                x=comps[0], y=comps[1], s=predsize,
+                x=comps[0], y=comps[1], s=predsize, zorder=6,
                 marker=predmarkers[0], c=predcolors[0],
                 edgecolor='black', linewidth='1', ax=ax, grid=True
             )
@@ -116,7 +118,8 @@ def _plot(
                     xytext=(10,-5),
                     textcoords='offset points',
                     size=textsize * (2 if predsize is None else (predsize / msize)),
-                    color='black'
+                    color='black',
+                    zorder=7
                 ), axis=1)
     return ax.figure
 
@@ -135,24 +138,40 @@ def _loadingsplot(
     textsize=10
 ):
     """Plot method for plotting loadings"""
-    ax = modelinstance.weights.plot(
+    try:
+        _loadings = modelinstance.weights
+    except AttributeError:
+        _loadings = modelinstance.loadings
+    ax = _loadings.plot(
         kind='scatter', x=comps[0], y=comps[1], figsize=figsize, s=msize,
-        c=color, edgecolor='black', grid=True, zorder=1
+        c=color, edgecolor='black', grid=True, zorder=3
     )
     if labels:
-        _ = modelinstance.weights.apply(lambda row: ax.annotate(
+        _loadings.apply(lambda row: ax.annotate(
             row.name, (row[comps[0]], row[comps[1]]),
             xytext=(10,-5),
             textcoords='offset points',
             size=textsize,
             color='black',
-            zorder=2
+            zorder=4
         ), axis=1)
     if showweights:
-        _ = modelinstance.q.plot(
-            kind='scatter', x=comps[0], y=comps[1], s=weightsize,
-            c=weightcolors or 'blue', edgecolor='black', grid=True, zorder=3, ax=ax
-        )
+        if weightmarkers is None:
+            modelinstance.q.plot(
+                kind='scatter', x=comps[0], y=comps[1], s=weightsize,
+                c=weightcolors or 'blue', edgecolor='black', grid=True, zorder=5, ax=ax
+            )
+        else:
+            for _m, _c, _x, _y in zip(
+                weightmarkers,
+                weightcolors or ['blue'] * len(weightmarkers),
+                modelinstance.q[comps[0]],
+                modelinstance.q[comps[1]]
+            ):
+                ax.scatter(
+                    _x, _y, marker=_m, c=_c, s=weightsize,
+                    edgecolor='k', zorder=5
+                )
         if labels:
             _ = modelinstance.q.apply(lambda row: ax.annotate(
                 row.name, (row[comps[0]], row[comps[1]]),
@@ -160,10 +179,10 @@ def _loadingsplot(
                 textcoords='offset points',
                 size=textsize * weightsize / msize,
                 color='black',
-                zorder=4
+                zorder=6
             ), axis=1)
-    ax.axvline(x=0, ls='-', color='black', linewidth=1)
-    ax.axhline(y=0, ls='-', color='black', linewidth=1)
+    ax.axvline(x=0, ls='-', color='black', linewidth=1, zorder=2.7)
+    ax.axhline(y=0, ls='-', color='black', linewidth=1, zorder=2.7)
     return ax.figure
 
 
@@ -589,19 +608,20 @@ class Nipals(object):
         figsize=(12,8),
     ):
         """Plot method for plotting loadings"""
-        ax = self.loadings.plot(
-            kind='scatter', x=comps[0], y=comps[1], figsize=figsize, s=msize,
-            c='0.7', edgecolor='black', grid=True)
-        _ = self.loadings.apply(lambda row: ax.annotate(
-            row.name, (row[comps[0]], row[comps[1]]),
-            xytext=(10,-5),
-            textcoords='offset points',
-            size=10,
-            color='black'
-        ), axis=1)
-        ax.axvline(x=0, ls='-', color='black', linewidth=1)
-        ax.axhline(y=0, ls='-', color='black', linewidth=1)
-        return ax.figure
+        return _loadingsplot(
+            modelinstance=self,
+            comps=comps,
+            markers=None,
+            color='0.7',
+            msize=msize,
+            figsize=figsize,
+            showweights=False,
+            weightmarkers=None,
+            weightcolors=None,
+            weightsize=None,
+            labels=True,
+            textsize=10
+        )
 
     def plot(
         self,
