@@ -501,9 +501,13 @@ class Nipals(object):
         if center:
             self.x_mean = pd.np.nanmean(self.x_mat, axis=0)
             self.x_mat = self.x_mat - self.x_mean
+        else:
+            self.x_mean = 0
         if scale:
             self.x_std = pd.np.nanstd(self.x_mat, axis=0, ddof=1)
             self.x_mat = self.x_mat / self.x_std
+        else:
+            self.x_std = 1
 
         TotalSS = pd.np.nansum(self.x_mat*self.x_mat)
         nr, nc = self.x_mat.shape
