@@ -2,6 +2,12 @@
 Changelog
 =========
 
+0.3.0 (2018-04-05)
+------------------
+
+* Added R2X and R2Y to the PLS class
+* Made plot color selectable also for scoreplots without classes
+
 0.2.0 (2018-03-29)
 ------------------
 
