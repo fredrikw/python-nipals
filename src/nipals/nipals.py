@@ -25,7 +25,8 @@ def _plot(
     predmarkers=None,
     labels=None,
     predlabels=None,
-    textsize=10
+    textsize=10,
+    color='#555555'
 ):
     """Plot method for plotting scores, with optional classes and predictions"""
     if not markers:
@@ -48,7 +49,7 @@ def _plot(
         ax = modelinstance.scores.plot(
             kind='scatter',
             x=comps[0], y=comps[1], figsize=figsize, s=msize, zorder=3,
-            marker=markers[0], edgecolor='black', linewidth='1', c='#555555', grid=True)
+            marker=markers[0], edgecolor='black', linewidth='1', c=color, grid=True)
     el = simpleEllipse(modelinstance.scores[comps[0]], modelinstance.scores[comps[1]], 0.95, 200)
     if labels:
         modelinstance.scores.reset_index(labels).apply(lambda row: ax.annotate(
@@ -406,13 +407,14 @@ class PLS(object):
         predcolors=None,
         predmarkers=None,
         labels=None,
-        predlabels=None
+        predlabels=None,
+        color='#555555'
     ):
         """Plot method for plotting scores, with optional classes and predictions"""
         return _plot(
             self, comps, classlevels, markers, classcolors, msize,
             figsize, plotpred, predsize, predlevels, predcolors, predmarkers,
-            labels, predlabels
+            labels, predlabels, 10, color
         )
 
     def loadingsplot(
@@ -652,13 +654,14 @@ class Nipals(object):
         predmarkers=None,
         labels=None,
         predlabels=None,
-        textsize=10
+        textsize=10,
+        color='#555555'
     ):
         """Plot method for plotting scores, with optional classes and predictions"""
         return _plot(
             self, comps, classlevels, markers, classcolors, msize,
             figsize, plotpred, predsize, predlevels, predcolors, predmarkers,
-            labels, predlabels, textsize
+            labels, predlabels, textsize, color
         )
 
     def predict(self, new_x):
