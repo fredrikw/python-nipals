@@ -256,13 +256,14 @@ class PLS(object):
             self.y_std = pd.np.nanstd(self.y_mat, axis=0, ddof=1)
             self.y_mat = self.y_mat / self.y_std
 
-        # TotalSSX = pd.np.nansum(self.x_mat*self.x_mat)
-        # TotalSSY = pd.np.nansum(self.y_mat*self.y_mat)
+        TotalSSX = pd.np.nansum(self.x_mat*self.x_mat)
+        TotalSSY = pd.np.nansum(self.y_mat*self.y_mat)
         nr, x_nc = self.x_mat.shape
         y_nc = self.y_mat.shape[1]
         # initialize outputs
         # eig = pd.np.empty((ncomp,))
-        # R2cum = pd.np.empty((ncomp,))
+        R2Xcum = pd.np.empty((ncomp,))
+        R2Ycum = pd.np.empty((ncomp,))
         loadings = pd.np.empty((x_nc, ncomp))
         scores = pd.np.empty((nr, ncomp))
         u = pd.np.empty((nr, ncomp))
@@ -382,7 +383,12 @@ class PLS(object):
             self.y_mat = self.y_mat - bh*pd.np.outer(th, qh)
 
             # Cumulative proportion of variance explained
-            # R2cum[comp] = 1 - (pd.np.nansum(self.x_mat*self.x_mat) / TotalSS)
+            R2Xcum[comp] = 1 - (pd.np.nansum(self.x_mat*self.x_mat) / TotalSSX)
+            R2Ycum[comp] = 1 - (pd.np.nansum(self.y_mat*self.y_mat) / TotalSSY)
+
+        # "Uncumulate" R2
+        self.R2X = pd.np.insert(pd.np.diff(R2Xcum), 0, R2Xcum[0])
+        self.R2Y = pd.np.insert(pd.np.diff(R2Ycum), 0, R2Ycum[0])
 
         # Convert results to DataFrames
         self.scores = pd.DataFrame(scores, index=self.x_df.index, columns=["PC{}".format(i+1) for i in range(ncomp)])
