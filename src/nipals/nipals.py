@@ -399,6 +399,40 @@ class PLS(object):
         self.b = pd.Series(b, index=["PC{}".format(i+1) for i in range(ncomp)])
         return True
 
+    def dModY(self):
+        """
+        Calculates DModY for model, ported from pcaMethods
+        (Stacklies W, Redestig H, Scholz M, Walther D and Selbig J (2007).
+        “pcaMethods – a Bioconductor package providing PCA methods for incomplete
+        data.” Bioinformatics, 23, pp. 1164–1167.)
+        Modified to scale with mean
+        """
+        nr, nc = self.y_mat.shape
+        ncomp = self.scores.shape[1]
+        A0 = 0 if type(self.y_mean) == int else 1
+        ny = pd.np.sqrt(nr / (nr - ncomp - A0))
+        F2 = self.y_mat*self.y_mat
+        s = pd.np.sqrt(pd.np.nansum(F2, axis=1) / (nc - ncomp)) * ny
+        S0 = pd.np.sqrt(pd.np.nansum(F2)/((nr - ncomp - A0) * (nc - ncomp)))
+        return s/S0
+
+    def dModX(self):
+        """
+        Calculates DModX for model, ported from pcaMethods
+        (Stacklies W, Redestig H, Scholz M, Walther D and Selbig J (2007).
+        “pcaMethods – a Bioconductor package providing PCA methods for incomplete
+        data.” Bioinformatics, 23, pp. 1164–1167.)
+        Modified to scale with mean
+        """
+        nr, nc = self.x_mat.shape
+        ncomp = self.scores.shape[1]
+        A0 = 0 if type(self.x_mean) == int else 1
+        ny = pd.np.sqrt(nr / (nr - ncomp - A0))
+        E2 = self.x_mat*self.x_mat
+        s = pd.np.sqrt(pd.np.nansum(E2, axis=1) / (nc - ncomp)) * ny
+        S0 = pd.np.sqrt(pd.np.nansum(E2)/((nr - ncomp - A0) * (nc - ncomp)))
+        return s/S0
+
     def plot(
         self,
         comps=['PC1', 'PC2'],
@@ -453,6 +487,25 @@ class PLS(object):
             textsize=textsize
         )
 
+    def dModXPlot(self):
+        dmx = self.dModX()
+        nr, nc = self.x_mat.shape
+        ncomp = self.scores.shape[1]
+        A0 = 0 if type(self.x_mean) == int else 1
+        fc = pd.np.sqrt(f.isf(0.05, nr - ncomp - A0, nc - ncomp))
+        ax = pd.Series(dmx, index=self.x_df.index.get_level_values(0)).plot(kind='bar', color='green')
+        ax.hlines(fc, -1, 20)
+        return ax.figure
+
+    def dModYPlot(self):
+        dmy = self.dModY()
+        nr, nc = self.y_mat.shape
+        ncomp = self.scores.shape[1]
+        A0 = 0 if type(self.y_mean) == int else 1
+        fc = pd.np.sqrt(f.isf(0.05, nr - ncomp - A0, nc - ncomp))
+        ax = pd.Series(dmy, index=self.y_df.index.get_level_values(0)).plot(kind='bar', color='green')
+        ax.hlines(fc, -1, 20)
+        return ax.figure
 
 class Nipals(object):
     """A Nipals class that can be used for PCA.
@@ -623,6 +676,23 @@ class Nipals(object):
         self.loadings = pd.DataFrame(loadings, index=self.x_df.columns, columns=["PC{}".format(i+1) for i in range(ncomp)])
         return True
 
+    def dModX(self):
+        """
+        Calculates DModX for model, ported from pcaMethods
+        (Stacklies W, Redestig H, Scholz M, Walther D and Selbig J (2007).
+        “pcaMethods – a Bioconductor package providing PCA methods for incomplete
+        data.” Bioinformatics, 23, pp. 1164–1167.)
+        Modified to scale with mean
+        """
+        nr, nc = self.x_mat.shape
+        ncomp = self.scores.shape[1]
+        A0 = 0 if type(self.x_mean) == int else 1
+        ny = pd.np.sqrt(nr / (nr - ncomp - A0))
+        E2 = self.x_mat*self.x_mat
+        s = pd.np.sqrt(pd.np.nansum(E2, axis=1) / (nc - ncomp)) * ny
+        S0 = pd.np.sqrt(pd.np.nansum(E2)/((nr - ncomp -A0) * (nc - ncomp)))
+        return s/S0
+
     def loadingsplot(
         self,
         comps=['PC1', 'PC2'],
@@ -677,3 +747,12 @@ class Nipals(object):
         if self.eigsweep:
             self.pred = self.pred / self.eig.values
         return True
+    def dModXPlot(self):
+        dmx = self.dModX()
+        nr, nc = self.x_mat.shape
+        ncomp = self.scores.shape[1]
+        A0 = 0 if type(self.x_mean) == int else 1
+        fc = pd.np.sqrt(f.isf(0.05, nr - ncomp - A0, nc - ncomp))
+        ax = pd.Series(dmx, index=self.x_df.index.get_level_values(0)).plot(kind='bar', color='green')
+        ax.hlines(fc, -1, 20)
+        return ax.figure
