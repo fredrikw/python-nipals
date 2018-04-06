@@ -230,7 +230,8 @@ class PLS(object):
         scale=True,
         startcol=None,
         tol=0.000001,
-        maxiter=500
+        maxiter=500,
+        cv=False
     ):
         """The Fit method, will fit a PLS to the X and Y data"""
         if ncomp is None:
@@ -264,6 +265,7 @@ class PLS(object):
         # eig = pd.np.empty((ncomp,))
         R2Xcum = pd.np.empty((ncomp,))
         R2Ycum = pd.np.empty((ncomp,))
+        PRESS_SS = pd.np.empty((ncomp,))
         loadings = pd.np.empty((x_nc, ncomp))
         scores = pd.np.empty((nr, ncomp))
         u = pd.np.empty((nr, ncomp))
@@ -279,90 +281,125 @@ class PLS(object):
         if x_hasna or y_hasna:
             logging.info("Data has NA values")
 
+        if cv:
+            if cv is True:
+                cv = 7
+            cvn = int(pd.np.ceil(nr / cv))
+            cvgroups = pd.np.array(range(cvn * cv)).reshape(cvn, cv).T
+            #modeldata.values[[i for i in cvgroups[0] if i < nr]]
+        else:
+            cv = 0
         for comp in range(ncomp):
-            # Set u to some column of Y
-            if startcol is None:
-                yvar = pd.np.nanvar(self.y_mat, axis=0, ddof=1)
-                startcol_use = pd.np.where(yvar == yvar.max())[0][0]
-            else:
-                startcol_use = startcol
-            logging.info("PC {}, starting with column {}".format(comp, startcol_use))
-
-            if y_hasna:
-                self.y_mat_0 = pd.np.nan_to_num(self.y_mat)
-                uh = self.y_mat_0[:, startcol_use]
-            else:
-                uh = self.y_mat[:, startcol_use]
-            th = uh
-
-            if x_hasna:
-                self.x_mat_0 = pd.np.nan_to_num(self.x_mat)
-
-            it = 0
-            while True:
-                # X-block weights
-                if x_hasna:
-                    U2 = pd.np.repeat(uh*uh, x_nc)
-                    U2.shape = (nr, x_nc)
-                    U2[x_miss] = 0
-                    wh = self.x_mat_0.T.dot(uh) / U2.sum(axis=0)
+            PRESS = 0
+            for cvround in range(cv + 1):
+                if cvround >= cv:
+                    # Calculate on full matrix after CV rounds
+                    train_x_mat = self.x_mat
+                    train_y_mat = self.y_mat
                 else:
-                    wh = self.x_mat.T.dot(uh) / sum(uh*uh)
-                # Normalize
-                wh = wh / math.sqrt(pd.np.nansum(wh*wh))
-
-                # X-block Scores
-                th_old = th
-                if x_hasna:
-                    W2 = pd.np.repeat(wh*wh, nr)
-                    W2.shape = (x_nc, nr)
-                    W2[x_miss.T] = 0
-                    th = self.x_mat_0.dot(wh) / W2.sum(axis=0)
+                    train_x_mat = pd.np.delete(self.x_mat, cvgroups[cvround], 0)
+                    train_y_mat = pd.np.delete(self.y_mat, cvgroups[cvround], 0)
+                nrt, x_nct = train_x_mat.shape
+                y_nct = train_y_mat.shape[1]
+                train_x_miss = pd.np.isnan(train_x_mat)
+                train_y_miss = pd.np.isnan(train_y_mat)
+                # Set u to some column of Y
+                if startcol is None:
+                    yvar = pd.np.nanvar(self.y_mat, axis=0, ddof=1)
+                    startcol_use = pd.np.where(yvar == yvar.max())[0][0]
                 else:
-                    th = self.x_mat.dot(wh) / sum(wh*wh)
+                    startcol_use = startcol
+                logging.info("PC {}, starting with column {}".format(comp, startcol_use))
 
-                # Y-block weights
                 if y_hasna:
-                    T2 = pd.np.repeat(th*th, y_nc)
-                    T2.shape = (nr, y_nc)
-                    T2[y_miss] = 0
-                    qh = self.y_mat_0.T.dot(th) / T2.sum(axis=0)
+                    train_y_mat_0 = pd.np.nan_to_num(train_y_mat)
+                    uh = train_y_mat_0[:, startcol_use]
                 else:
-                    qh = self.y_mat.T.dot(th) / sum(th*th)
-                # Normalize
-                # According to Analytica Chimica Acta, 186 (1986) 1-17 this normalization
-                # should be done. However, if so, the results are not the same as th R package
-                # pls plsr method or Evince.
-                # qh = qh / math.sqrt(pd.np.nansum(qh*qh))
+                    uh = train_y_mat[:, startcol_use]
+                th = uh
 
-                # Y-block Scores
-                if y_hasna:
-                    Q2 = pd.np.repeat(qh*qh, nr)
-                    Q2.shape = (y_nc, nr)
-                    Q2[y_miss.T] = 0
-                    uh = self.y_mat_0.dot(qh) / Q2.sum(axis=0)
-                else:
-                    uh = self.y_mat.dot(qh) / sum(qh*qh)
+                if x_hasna:
+                    train_x_mat_0 = pd.np.nan_to_num(train_x_mat)
 
-                # Check convergence
-                if pd.np.nansum((th-th_old)**2) < tol:
-                    break
-                it += 1
-                if it >= maxiter:
-                    raise RuntimeError(
-                        "Convergence was not reached in {} iterations for component {}".format(
-                            maxiter, comp
+                it = 0
+                while True:
+                    # X-block weights
+                    if x_hasna:
+                        U2 = pd.np.repeat(uh*uh, x_nct)
+                        U2.shape = (nrt, x_nct)
+                        U2[train_x_miss] = 0
+                        wh = train_x_mat_0.T.dot(uh) / U2.sum(axis=0)
+                    else:
+                        wh = train_x_mat.T.dot(uh) / sum(uh*uh)
+                    # Normalize
+                    wh = wh / math.sqrt(pd.np.nansum(wh*wh))
+
+                    # X-block Scores
+                    th_old = th
+                    if x_hasna:
+                        W2 = pd.np.repeat(wh*wh, nrt)
+                        W2.shape = (x_nct, nrt)
+                        W2[train_x_miss.T] = 0
+                        th = train_x_mat_0.dot(wh) / W2.sum(axis=0)
+                    else:
+                        th = train_x_mat.dot(wh) / sum(wh*wh)
+
+                    # Y-block weights
+                    if y_hasna:
+                        T2 = pd.np.repeat(th*th, y_nct)
+                        T2.shape = (nrt, y_nct)
+                        T2[train_y_miss] = 0
+                        qh = train_y_mat_0.T.dot(th) / T2.sum(axis=0)
+                    else:
+                        qh = train_y_mat.T.dot(th) / sum(th*th)
+                    # Normalize
+                    # According to Analytica Chimica Acta, 186 (1986) 1-17 this normalization
+                    # should be done. However, if so, the results are not the same as th R package
+                    # pls plsr method or Evince.
+                    # qh = qh / math.sqrt(pd.np.nansum(qh*qh))
+
+                    # Y-block Scores
+                    if y_hasna:
+                        Q2 = pd.np.repeat(qh*qh, nrt)
+                        Q2.shape = (y_nct, nrt)
+                        Q2[train_y_miss.T] = 0
+                        uh = train_y_mat_0.dot(qh) / Q2.sum(axis=0)
+                    else:
+                        uh = train_y_mat.dot(qh) / sum(qh*qh)
+
+                    # Check convergence
+                    if pd.np.nansum((th-th_old)**2) < tol:
+                        break
+                    it += 1
+                    if it >= maxiter:
+                        raise RuntimeError(
+                            "Convergence was not reached in {} iterations for component {}".format(
+                                maxiter, comp
+                            )
                         )
-                    )
+
+                # Calculate PRESS for this CV
+                print(self.y_mat.shape, th.shape, qh.shape)
+                if cvround < cv:
+                    pred_x_mat = self.x_mat[[i for i in cvgroups[cvround] if i < nr]]
+                    pred_y_mat = self.y_mat[[i for i in cvgroups[cvround] if i < nr]]
+                    pred_x_mat = pd.np.nan_to_num(pred_x_mat)
+                    cv_th = pred_x_mat.dot(wh) / sum(wh*wh)
+                    cv_bh = sum(uh*th)/sum(th**2)
+                    cv_res = pred_y_mat - cv_bh*pd.np.outer(cv_th, qh)
+                    cv_res[pd.np.isnan(pred_y_mat)] = 0
+                    PRESS += pd.np.sum(cv_res**2)
+
+            PRESS_SS[comp] = PRESS / pd.np.nansum(self.y_mat*self.y_mat)
 
             # Calculate X loadings and rescale the scores and weights
             if x_hasna:
                 T2 = pd.np.repeat(th*th, x_nc)
                 T2.shape = (nr, x_nc)
                 T2[x_miss] = 0
-                ph = self.x_mat_0.T.dot(th) / T2.sum(axis=0)
+                ph = train_x_mat_0.T.dot(th) / T2.sum(axis=0)
             else:
-                ph = self.x_mat.T.dot(th) / sum(th*th)
+                ph = train_x_mat.T.dot(th) / sum(th*th)
             # Normalize
             # According to Analytica Chimica Acta, 186 (1986) 1-17 this normalization
             # should be done. However, if so, the results are not the same as th R package
@@ -389,6 +426,13 @@ class PLS(object):
         # "Uncumulate" R2
         self.R2X = pd.np.insert(pd.np.diff(R2Xcum), 0, R2Xcum[0])
         self.R2Y = pd.np.insert(pd.np.diff(R2Ycum), 0, R2Ycum[0])
+        self.R2Xcum = pd.Series(R2Xcum, index=["PC{}".format(i+1) for i in range(ncomp)])
+        self.R2Ycum = pd.Series(R2Ycum, index=["PC{}".format(i+1) for i in range(ncomp)])
+
+        if cv:
+            self.PRESS_SS = pd.Series(PRESS_SS, index=["PC{}".format(i+1) for i in range(ncomp)])
+            self.Q2 = 1 - self.PRESS_SS
+            self.Q2cum = 1 - pd.np.cumprod(self.PRESS_SS)
 
         # Convert results to DataFrames
         self.scores = pd.DataFrame(scores, index=self.x_df.index, columns=["PC{}".format(i+1) for i in range(ncomp)])
@@ -487,6 +531,15 @@ class PLS(object):
             textsize=textsize
         )
 
+    def overviewplot(self):
+        return pd.DataFrame(
+            {
+                'R2Y(cum)': self.R2Ycum,
+                'Q2(cum)': getattr(self, 'Q2cum', None)
+            },
+            columns=['R2Y(cum)', 'Q2(cum)']
+        ).plot(kind='bar', color=['g', 'b']).figure
+
     def dModXPlot(self):
         dmx = self.dModX()
         nr, nc = self.x_mat.shape
@@ -533,7 +586,8 @@ class Nipals(object):
         maxiter=500,
         startcol=None,
         gramschmidt=False,
-        eigsweep=False
+        eigsweep=False,
+        cv=False
     ):
         """The Fit method, will fit a PCA to the X data.
 
@@ -578,6 +632,7 @@ class Nipals(object):
         # TTp = pd.np.zeros((nr, nr))
         eig = pd.np.empty((ncomp,))
         R2cum = pd.np.empty((ncomp,))
+        PRESS_SS = pd.np.empty((ncomp,))
         loadings = pd.np.empty((nc, ncomp))
         scores = pd.np.empty((nr, ncomp))
 
@@ -591,62 +646,89 @@ class Nipals(object):
         # t = [None] * ncomp
         # p = [None] * ncomp
         self.eig = []
+        if cv:
+            if cv is True:
+                cv = 7
+            cvn = int(pd.np.ceil(nr / cv))
+            cvgroups = pd.np.array(range(cvn * cv)).reshape(cvn, cv).T
+            #modeldata.values[[i for i in cvgroups[0] if i < nr]]
+        else:
+            cv = 0
         for comp in range(ncomp):
-            # Set t to first column of X
-            if startcol is None:
-                xvar = pd.np.nanvar(self.x_mat, axis=0, ddof=1)
-                startcol_use = pd.np.where(xvar == xvar.max())[0][0]
-            else:
-                startcol_use = startcol
-            logging.info("PC {}, starting with column {}".format(comp, startcol_use))
-
-            if hasna:
-                self.x_mat_0 = pd.np.nan_to_num(self.x_mat)
-                th = self.x_mat_0[:, startcol_use]
-            else:
-                th = self.x_mat[:, startcol_use]
-            it = 0
-            while True:
-                # loadings
-                if hasna:
-                    T2 = pd.np.repeat(th*th, nc)
-                    T2.shape = (nr, nc)
-                    T2[x_miss] = 0
-                    ph = self.x_mat_0.T.dot(th) / T2.sum(axis=0)
+            PRESS = 0
+            for cvround in range(cv + 1):
+                if cvround >= cv:
+                    # Calculate on full matrix after CV rounds
+                    train_mat = self.x_mat
                 else:
-                    ph = self.x_mat.T.dot(th) / sum(th*th)
-                # Gram Schmidt
-                if gramschmidt and comp > 0:
-                    # ph <- ph - PPp %*% ph
-                    pass
-                # Normalize
-                ph = ph / math.sqrt(pd.np.nansum(ph*ph))
-
-                # Scores
-                th_old = th
-                if hasna:
-                    P2 = pd.np.repeat(ph*ph, nr)
-                    P2.shape = (nc, nr)
-                    P2[x_miss.T] = 0
-                    th = self.x_mat_0.dot(ph) / P2.sum(axis=0)
+                    train_mat = pd.np.delete(self.x_mat, cvgroups[cvround], 0)
+                nrt, nct = train_mat.shape
+                train_miss = pd.np.isnan(train_mat)
+                # Set t to first column of X
+                if startcol is None:
+                    xvar = pd.np.nanvar(self.x_mat, axis=0, ddof=1)
+                    startcol_use = pd.np.where(xvar == xvar.max())[0][0]
                 else:
-                    th = self.x_mat.dot(ph) / sum(ph*ph)
-                # Gram Schmidt
-                if gramschmidt and comp > 0:
-                    # th <- th - TTp %*% th
-                    pass
+                    startcol_use = startcol
+                logging.info("PC {}, starting with column {}".format(comp, startcol_use))
 
-                # Check convergence
-                if pd.np.nansum((th-th_old)**2) < tol:
-                    break
-                it += 1
-                if it >= maxiter:
-                    raise RuntimeError(
-                        "Convergence was not reached in {} iterations for component {}".format(
-                            maxiter, comp
+                if hasna:
+                    train_mat_0 = pd.np.nan_to_num(train_mat)
+                    th = train_mat_0[:, startcol_use]
+                else:
+                    th = train_mat[:, startcol_use]
+                it = 0
+                while True:
+                    # loadings
+                    if hasna:
+                        T2 = pd.np.repeat(th*th, nct)
+                        T2.shape = (nrt, nct)
+                        T2[train_miss] = 0
+                        ph = train_mat_0.T.dot(th) / T2.sum(axis=0)
+                    else:
+                        ph = train_mat.T.dot(th) / sum(th*th)
+                    # Gram Schmidt
+                    if gramschmidt and comp > 0:
+                        # ph <- ph - PPp %*% ph
+                        pass
+                    # Normalize
+                    ph = ph / math.sqrt(pd.np.nansum(ph*ph))
+
+                    # Scores
+                    th_old = th
+                    if hasna:
+                        P2 = pd.np.repeat(ph*ph, nrt)
+                        P2.shape = (nct, nrt)
+                        P2[train_miss.T] = 0
+                        th = train_mat_0.dot(ph) / P2.sum(axis=0)
+                    else:
+                        th = train_mat.dot(ph) / sum(ph*ph)
+                    # Gram Schmidt
+                    if gramschmidt and comp > 0:
+                        # th <- th - TTp %*% th
+                        pass
+
+                    # Check convergence
+                    if pd.np.nansum((th-th_old)**2) < tol:
+                        break
+                    it += 1
+                    if it >= maxiter:
+                        raise RuntimeError(
+                            "Convergence was not reached in {} iterations for component {}".format(
+                                maxiter, comp
+                            )
                         )
-                    )
+                # Calculate PRESS for this CV
+                if cvround < cv:
+                    pred_mat = self.x_mat[[i for i in cvgroups[cvround] if i < nr]]
+                    pred_miss = pd.np.isnan(pred_mat)
+                    pred_mat = pd.np.nan_to_num(pred_mat)
+                    cv_t_pred = pred_mat.dot(ph)
+                    cv_res = pred_mat - pd.np.outer(cv_t_pred, ph)
+                    cv_res[pred_miss] = 0
+                    PRESS += pd.np.sum(cv_res**2)
 
+            PRESS_SS[comp] = PRESS / pd.np.nansum(self.x_mat*self.x_mat)
             # Update X
             self.x_mat = self.x_mat - pd.np.outer(th, ph)
             loadings[:, comp] = ph
@@ -665,11 +747,16 @@ class Nipals(object):
 
         # "Uncumulate" R2
         self.R2 = pd.np.insert(pd.np.diff(R2cum), 0, R2cum[0])
+        self.R2cum = pd.Series(R2cum, index=["PC{}".format(i+1) for i in range(ncomp)])
 
         # Finalize eigenvalues and subtract from scores
         self.eig = pd.Series(pd.np.sqrt(eig))
         if self.eigsweep:
             scores = scores / self.eig.values
+        if cv:
+            self.PRESS_SS = pd.Series(PRESS_SS, index=["PC{}".format(i+1) for i in range(ncomp)])
+            self.Q2 = 1 - self.PRESS_SS
+            self.Q2cum = 1 - pd.np.cumprod(self.PRESS_SS)
 
         # Convert results to DataFrames
         self.scores = pd.DataFrame(scores, index=self.x_df.index, columns=["PC{}".format(i+1) for i in range(ncomp)])
@@ -747,6 +834,16 @@ class Nipals(object):
         if self.eigsweep:
             self.pred = self.pred / self.eig.values
         return True
+
+    def overviewplot(self):
+        return pd.DataFrame(
+            {
+                'R2(cum)': self.R2cum,
+                'Q2(cum)': getattr(self, 'Q2cum', None)
+            },
+            columns=['R2(cum)', 'Q2(cum)']
+        ).plot(kind='bar', color=['g', 'b']).figure
+
     def dModXPlot(self):
         dmx = self.dModX()
         nr, nc = self.x_mat.shape
