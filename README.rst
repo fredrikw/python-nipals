@@ -61,7 +61,7 @@ Overview
 
 A module for calculation of PCA and PLS with the NIPALS algorithm. Based on the R packages
 `nipals <https://cran.r-project.org/package=nipals>`_ and
-`pcaMethods <https://doi.org/doi:10.18129/B9.bioc.pcaMethods>` as well as the
+`pcaMethods <https://doi.org/10.18129/B9.bioc.pcaMethods>` as well as the
 statistical appendixes to "Introduction to Multi- and Megavariate Data Analysis
 using Projection Methods (PCA & PLS)" by Eriksson et. al.
 Tested to give same results as the above packages and Simca, with some rounding errors.
