@@ -81,12 +81,6 @@ def test_run_pca():
     ])
 
 
-def test_run_pca_gramschmidt():
-    nip = nipals.Nipals(testdata)
-    with pytest.raises(NotImplementedError):
-        nip.fit(gramschmidt=True)
-
-
 def test_call_with_too_large_ncomp(caplog):
     nip = nipals.Nipals(testdata)
     assert nip.fit(ncomp=10)

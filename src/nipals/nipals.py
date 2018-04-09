@@ -578,7 +578,7 @@ class Nipals(object):
             logging.warning("Data contained infinite values, converting to missing values")
             self.x_df.replace([pd.np.inf, -pd.np.inf], pd.np.nan, inplace=True)
 
-    def _onecomp(self, mat, comp, hasna, startcol, gramschmidt, tol, maxiter):
+    def _onecomp(self, mat, comp, hasna, startcol, tol, maxiter):
         nrt, nct = mat.shape
         miss = pd.np.isnan(mat)
         # Set t to column of X with highest var (uses original X mat)
@@ -604,10 +604,6 @@ class Nipals(object):
                 ph = mat_0.T.dot(th) / T2.sum(axis=0)
             else:
                 ph = mat.T.dot(th) / sum(th*th)
-            # Gram Schmidt
-            if gramschmidt and comp > 0:
-                # ph <- ph - PPp %*% ph
-                pass
             # Normalize
             ph = ph / math.sqrt(pd.np.nansum(ph*ph))
 
@@ -620,10 +616,6 @@ class Nipals(object):
                 th = mat_0.dot(ph) / P2.sum(axis=0)
             else:
                 th = mat.dot(ph) / sum(ph*ph)
-            # Gram Schmidt
-            if gramschmidt and comp > 0:
-                # th <- th - TTp %*% th
-                pass
 
             # Check convergence
             if pd.np.nansum((th-th_old)**2) < tol:
@@ -645,7 +637,6 @@ class Nipals(object):
         scale=True,
         maxiter=500,
         startcol=None,
-        gramschmidt=False,
         eigsweep=False,
         cv=False
     ):
@@ -658,10 +649,7 @@ class Nipals(object):
         scale - whether to scale the data, defaults to True
         maxiter - maximum number of iterations before convergence is considered failed, defaults to 500
         startcol - column in X data to start iteration from, if set to None, the column with maximal variance is selected, defaults to None
-        gramschmidt - whether to run Gram-Schmidt orthogonalization, defaults to False. Not implemented!
         eigsweep - whether to sweep out eigenvalues from the final scores, defaults to False"""
-        if gramschmidt:
-            raise NotImplementedError
         self.eigsweep = eigsweep
         if ncomp is None:
             ncomp = min(self.x_df.shape)
@@ -687,9 +675,6 @@ class Nipals(object):
         TotalSS = pd.np.nansum(self.x_mat*self.x_mat)
         nr, nc = self.x_mat.shape
         # initialize outputs
-        # PPp and TTp are for Gram-Schmidt calculations
-        # PPp = pd.np.zeros((nc, nc))
-        # TTp = pd.np.zeros((nr, nr))
         eig = pd.np.empty((ncomp,))
         R2cum = pd.np.empty((ncomp,))
         PRESS_SS = pd.np.empty((ncomp,))
@@ -721,12 +706,12 @@ class Nipals(object):
             cvT = pd.np.empty((nr, nc))
             PRESS = 0
             # Calculate on full matrix
-            th, ph = self._onecomp(self.x_mat, comp, hasna, startcol, gramschmidt, tol, maxiter)
+            th, ph = self._onecomp(self.x_mat, comp, hasna, startcol, tol, maxiter)
             for cvround in range(cv):
                 train_mat = pd.np.delete(self.x_mat, cvxgroups[cvround], 0)
-                _, ph_cv = self._onecomp(train_mat, comp, hasna, startcol, gramschmidt, tol, maxiter)
+                _, ph_cv = self._onecomp(train_mat, comp, hasna, startcol, tol, maxiter)
                 train_mat = pd.np.delete(self.x_mat, cvygroups[cvround], 1)
-                th_cv, _ = self._onecomp(train_mat, comp, hasna, startcol, gramschmidt, tol, maxiter)
+                th_cv, _ = self._onecomp(train_mat, comp, hasna, startcol, tol, maxiter)
                 # Make sure the PCs are rotated in the same main direction for all cvs
                 if pd.np.corrcoef(ph, ph_cv)[1, 0] < 0:
                     cvP[[grp for grp in cvxgroups[cvround] if grp < nr]] = -ph_cv
@@ -747,13 +732,6 @@ class Nipals(object):
             loadings[:, comp] = ph
             scores[:, comp] = th
             eig[comp] = pd.np.nansum(th*th)
-
-            # Update (Ph)(Ph)' and (Th)(Th)' for next PC
-            if gramschmidt:
-                pass
-            #   PPp = PPp + tcrossprod(ph)
-            #   TTp = TTp + tcrossprod(th) / eig[h]
-            # }
 
             # Cumulative proportion of variance explained
             R2cum[comp] = 1 - (pd.np.nansum(self.x_mat*self.x_mat) / TotalSS)
