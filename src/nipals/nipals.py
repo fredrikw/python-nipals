@@ -576,6 +576,65 @@ class Nipals(object):
             logging.warning("Data contained infinite values, converting to missing values")
             self.x_df.replace([pd.np.inf, -pd.np.inf], pd.np.nan, inplace=True)
 
+    def _onecomp(self, mat, comp, hasna, startcol, gramschmidt, tol, maxiter):
+        nrt, nct = mat.shape
+        miss = pd.np.isnan(mat)
+        # Set t to column of X with highest var (uses original X mat)
+        if startcol is None:
+            xvar = pd.np.nanvar(self.x_mat, axis=0, ddof=1)
+            startcol_use = pd.np.where(xvar == xvar.max())[0][0]
+        else:
+            startcol_use = startcol
+        logging.info("PC {}, starting with column {}".format(comp, startcol_use))
+
+        if hasna:
+            mat_0 = pd.np.nan_to_num(mat)
+            th = mat_0[:, startcol_use]
+        else:
+            th = mat[:, startcol_use]
+        it = 0
+        while True:
+            # loadings
+            if hasna:
+                T2 = pd.np.repeat(th*th, nct)
+                T2.shape = (nrt, nct)
+                T2[miss] = 0
+                ph = mat_0.T.dot(th) / T2.sum(axis=0)
+            else:
+                ph = mat.T.dot(th) / sum(th*th)
+            # Gram Schmidt
+            if gramschmidt and comp > 0:
+                # ph <- ph - PPp %*% ph
+                pass
+            # Normalize
+            ph = ph / math.sqrt(pd.np.nansum(ph*ph))
+
+            # Scores
+            th_old = th
+            if hasna:
+                P2 = pd.np.repeat(ph*ph, nrt)
+                P2.shape = (nct, nrt)
+                P2[miss.T] = 0
+                th = mat_0.dot(ph) / P2.sum(axis=0)
+            else:
+                th = mat.dot(ph) / sum(ph*ph)
+            # Gram Schmidt
+            if gramschmidt and comp > 0:
+                # th <- th - TTp %*% th
+                pass
+
+            # Check convergence
+            if pd.np.nansum((th-th_old)**2) < tol:
+                break
+            it += 1
+            if it >= maxiter:
+                raise RuntimeError(
+                    "Convergence was not reached in {} iterations for component {}".format(
+                        maxiter, comp
+                    )
+                )
+        return th, ph
+
     def fit(
         self,
         ncomp=None,
@@ -648,84 +707,37 @@ class Nipals(object):
         if cv:
             if cv is True:
                 cv = 7
-            cvn = int(pd.np.ceil(nr / cv))
-            cvgroups = pd.np.array(range(cvn * cv)).reshape(cvn, cv).T
-            #modeldata.values[[i for i in cvgroups[0] if i < nr]]
+            cvxn = int(pd.np.ceil(nr / cv))
+            cvxgroups = pd.np.array(range(cvxn * cv)).reshape(cvxn, cv).T
+            cvyn = int(pd.np.ceil(nc / cv))
+            cvygroups = pd.np.array(range(cvyn * cv)).reshape(cvyn, cv).T
         else:
             cv = 0
         for comp in range(ncomp):
+            # Matrixes to keep ps and ts from cv folds
+            cvP = pd.np.empty((nr, nc))
+            cvT = pd.np.empty((nr, nc))
             PRESS = 0
-            for cvround in range(cv + 1):
-                if cvround >= cv:
-                    # Calculate on full matrix after CV rounds
-                    train_mat = self.x_mat
+            # Calculate on full matrix
+            th, ph = self._onecomp(self.x_mat, comp, hasna, startcol, gramschmidt, tol, maxiter)
+            for cvround in range(cv):
+                train_mat = pd.np.delete(self.x_mat, cvxgroups[cvround], 0)
+                _, ph_cv = self._onecomp(train_mat, comp, hasna, startcol, gramschmidt, tol, maxiter)
+                train_mat = pd.np.delete(self.x_mat, cvygroups[cvround], 1)
+                th_cv, _ = self._onecomp(train_mat, comp, hasna, startcol, gramschmidt, tol, maxiter)
+                # Make sure the PCs are rotated in the same main direction for all cvs
+                if pd.np.corrcoef(ph, ph_cv)[1, 0] < 0:
+                    cvP[[grp for grp in cvxgroups[cvround] if grp < nr]] = -ph_cv
+                    cvT.T[[grp for grp in cvygroups[cvround] if grp < nc]] = -th_cv
                 else:
-                    train_mat = pd.np.delete(self.x_mat, cvgroups[cvround], 0)
-                nrt, nct = train_mat.shape
-                train_miss = pd.np.isnan(train_mat)
-                # Set t to first column of X
-                if startcol is None:
-                    xvar = pd.np.nanvar(self.x_mat, axis=0, ddof=1)
-                    startcol_use = pd.np.where(xvar == xvar.max())[0][0]
-                else:
-                    startcol_use = startcol
-                logging.info("PC {}, starting with column {}".format(comp, startcol_use))
-
-                if hasna:
-                    train_mat_0 = pd.np.nan_to_num(train_mat)
-                    th = train_mat_0[:, startcol_use]
-                else:
-                    th = train_mat[:, startcol_use]
-                it = 0
-                while True:
-                    # loadings
-                    if hasna:
-                        T2 = pd.np.repeat(th*th, nct)
-                        T2.shape = (nrt, nct)
-                        T2[train_miss] = 0
-                        ph = train_mat_0.T.dot(th) / T2.sum(axis=0)
-                    else:
-                        ph = train_mat.T.dot(th) / sum(th*th)
-                    # Gram Schmidt
-                    if gramschmidt and comp > 0:
-                        # ph <- ph - PPp %*% ph
-                        pass
-                    # Normalize
-                    ph = ph / math.sqrt(pd.np.nansum(ph*ph))
-
-                    # Scores
-                    th_old = th
-                    if hasna:
-                        P2 = pd.np.repeat(ph*ph, nrt)
-                        P2.shape = (nct, nrt)
-                        P2[train_miss.T] = 0
-                        th = train_mat_0.dot(ph) / P2.sum(axis=0)
-                    else:
-                        th = train_mat.dot(ph) / sum(ph*ph)
-                    # Gram Schmidt
-                    if gramschmidt and comp > 0:
-                        # th <- th - TTp %*% th
-                        pass
-
-                    # Check convergence
-                    if pd.np.nansum((th-th_old)**2) < tol:
-                        break
-                    it += 1
-                    if it >= maxiter:
-                        raise RuntimeError(
-                            "Convergence was not reached in {} iterations for component {}".format(
-                                maxiter, comp
-                            )
-                        )
-                # Calculate PRESS for this CV
-                if cvround < cv:
-                    pred_mat = self.x_mat[[i for i in cvgroups[cvround] if i < nr]]
-                    pred_miss = pd.np.isnan(pred_mat)
-                    pred_mat = pd.np.nan_to_num(pred_mat)
-                    cv_t_pred = pred_mat.dot(ph)
-                    cv_res = pred_mat - pd.np.outer(cv_t_pred, ph)
-                    cv_res[pred_miss] = 0
-                    PRESS += pd.np.sum(cv_res**2)
+                    cvP[[grp for grp in cvxgroups[cvround] if grp < nr]] = ph_cv
+                    cvT.T[[grp for grp in cvygroups[cvround] if grp < nc]] = th_cv
+            # Calculate PRESS
+            if cv:
+                pred_mat = cvP * cvT
+                cv_res = self.x_mat - pred_mat
+                cv_res[x_miss] = 0
+                PRESS = pd.np.sum(cv_res**2)
 
             PRESS_SS[comp] = PRESS / pd.np.nansum(self.x_mat*self.x_mat)
             # Update X
