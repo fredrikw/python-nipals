@@ -408,3 +408,110 @@ def test_inf_values_in_dfs(caplog):
             'Y data contained infinite values, converting to missing values'
         ),
     ]
+
+
+def test_cv_pca():
+    nip = nipals.Nipals(testdata_class)
+    assert nip.fit(ncomp=2, cv=True, startcol=1)
+    assert nip.fit(ncomp=2, cv=4)
+    pd.np.testing.assert_almost_equal(
+        nip.R2,
+        [0.8112004, 0.144992]
+    )
+    pd.np.testing.assert_almost_equal(
+        nip.Q2,
+        [0.5779837, 0.1907985]
+    )
+
+
+def test_cv_pls():
+    pls = nipals.PLS(oliveoil.iloc[:, :5], oliveoil.iloc[:, 5:])
+    assert pls.fit(ncomp=2, cv=True)
+    assert pls.fit(ncomp=2, cv=4)
+    pd.np.testing.assert_almost_equal(
+        pls.Q2,
+        [0.2684853, 0.0644187]
+    )
+    pd.np.testing.assert_almost_equal(
+        pls.R2X,
+        [0.5826444, 0.2367458]
+    )
+    pd.np.testing.assert_almost_equal(
+        pls.R2Y,
+        [0.4326835, 0.0856207]
+    )
+
+
+def test_dmodx_pca():
+    nip = nipals.Nipals(testdata_class)
+    assert nip.fit(ncomp=2)
+    pd.np.testing.assert_almost_equal(
+        nip.dModX(),
+        [
+            0.5364634, 0.3480396, 0.5702191,
+            1.5525099, 1.5752593, 0.3275259,
+            1.1255771
+        ]
+    )
+
+
+def test_dmodx_plot_pca():
+    nip = nipals.Nipals(testdata_class)
+    assert nip.fit(ncomp=2)
+    plt = nip.dModXPlot()
+    assert isinstance(plt, matplotlib.figure.Figure)
+    return plt
+
+
+def test_overviewplotplot_pca():
+    nip = nipals.Nipals(testdata_class)
+    assert nip.fit(ncomp=2)
+    plt = nip.overviewplot()
+    assert isinstance(plt, matplotlib.figure.Figure)
+    return plt
+
+
+def test_dmod_pls():
+    pls = nipals.PLS(oliveoil.iloc[:, :5], oliveoil.iloc[:, 5:])
+    assert pls.fit(ncomp=2)
+    pd.np.testing.assert_almost_equal(
+        pls.dModX(),
+        [
+            0.8561775, 0.6808639, 1.2475466, 1.9522224,
+            0.1694258, 0.6151471, 0.8651022, 1.1295028,
+            1.2212977, 1.2945167, 0.8681262, 1.141947,
+            0.7637504, 0.3900809, 0.7382779, 0.7063927
+        ]
+    )
+    pd.np.testing.assert_almost_equal(
+        pls.dModY(),
+        [
+            0.5728738, 2.0598601, 1.2420525, 0.5257193, 1.4290988, 0.7752674,
+            1.0029673, 0.8943648, 1.0509669, 0.8511583, 0.7153933, 1.0285289,
+            0.8238886, 0.4616424, 0.5664762, 0.7409856
+        ]
+    )
+
+
+def test_dmodx_plot_pls():
+    pls = nipals.PLS(oliveoil.iloc[:, :5], oliveoil.iloc[:, 5:])
+    assert pls.fit(ncomp=2)
+    plt = pls.dModXPlot()
+    assert isinstance(plt, matplotlib.figure.Figure)
+    return plt
+
+
+def test_dmody_plot_pls():
+    pls = nipals.PLS(oliveoil.iloc[:, :5], oliveoil.iloc[:, 5:])
+    assert pls.fit(ncomp=2)
+    plt = pls.dModYPlot()
+    assert isinstance(plt, matplotlib.figure.Figure)
+    return plt
+
+
+def test_overviewplotplot_pls():
+    pls = nipals.PLS(oliveoil.iloc[:, :5], oliveoil.iloc[:, 5:])
+    assert pls.fit(ncomp=2)
+    plt = pls.overviewplot()
+    assert isinstance(plt, matplotlib.figure.Figure)
+    return plt

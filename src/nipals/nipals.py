@@ -1,3 +1,5 @@
+from __future__ import division
+
 import logging
 # logging.basicConfig(level=logging.INFO)
 import math
