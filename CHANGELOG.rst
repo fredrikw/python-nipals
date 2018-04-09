@@ -2,6 +2,13 @@
 Changelog
 =========
 
+0.4.0 (2018-04-09)
+------------------
+
+* Added cross validations
+* Added calculation of distance to model with plots
+* Added model overview plots
+
 0.3.0 (2018-04-05)
 ------------------
 
