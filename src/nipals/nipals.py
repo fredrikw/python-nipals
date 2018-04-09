@@ -286,7 +286,6 @@ class PLS(object):
                 cv = 7
             cvn = int(pd.np.ceil(nr / cv))
             cvgroups = pd.np.array(range(cvn * cv)).reshape(cvn, cv).T
-            #modeldata.values[[i for i in cvgroups[0] if i < nr]]
         else:
             cv = 0
         for comp in range(ncomp):
@@ -379,7 +378,6 @@ class PLS(object):
                         )
 
                 # Calculate PRESS for this CV
-                print(self.y_mat.shape, th.shape, qh.shape)
                 if cvround < cv:
                     pred_x_mat = self.x_mat[[i for i in cvgroups[cvround] if i < nr]]
                     pred_y_mat = self.y_mat[[i for i in cvgroups[cvround] if i < nr]]
@@ -559,6 +557,7 @@ class PLS(object):
         ax = pd.Series(dmy, index=self.y_df.index.get_level_values(0)).plot(kind='bar', color='green')
         ax.hlines(fc, -1, 20)
         return ax.figure
+
 
 class Nipals(object):
     """A Nipals class that can be used for PCA.
@@ -777,7 +776,7 @@ class Nipals(object):
         ny = pd.np.sqrt(nr / (nr - ncomp - A0))
         E2 = self.x_mat*self.x_mat
         s = pd.np.sqrt(pd.np.nansum(E2, axis=1) / (nc - ncomp)) * ny
-        S0 = pd.np.sqrt(pd.np.nansum(E2)/((nr - ncomp -A0) * (nc - ncomp)))
+        S0 = pd.np.sqrt(pd.np.nansum(E2)/((nr - ncomp - A0) * (nc - ncomp)))
         return s/S0
 
     def loadingsplot(
