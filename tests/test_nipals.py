@@ -406,7 +406,7 @@ def test_inf_values_in_dfs(caplog):
 
 def test_cv_pca():
     nip = nipals.Nipals(testdata_class)
-    assert nip.fit(ncomp=2, cv=True, startcol=1)
+    assert nip.fit(ncomp=2, cv=True)
     assert nip.fit(ncomp=2, cv=4)
     pd.np.testing.assert_almost_equal(
         nip.R2,
@@ -415,6 +415,19 @@ def test_cv_pca():
     pd.np.testing.assert_almost_equal(
         nip.Q2,
         [0.5779837, 0.1907985]
+    )
+
+
+def test_cv_pca_with_fliped_axis():
+    """Checks that the Q2 is approx the same when some cvs have flipped axis in some PC"""
+    nip = nipals.Nipals(testdata_class)
+    assert nip.fit(ncomp=2, cv=True, startcol=2)
+    Q2_sc2 = nip.Q2.values
+    assert nip.fit(ncomp=2, cv=True)
+    pd.np.testing.assert_almost_equal(
+        nip.Q2,
+        Q2_sc2,
+        3
     )
 
 

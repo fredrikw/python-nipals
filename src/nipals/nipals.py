@@ -715,9 +715,11 @@ class Nipals(object):
                 # Make sure the PCs are rotated in the same main direction for all cvs
                 if pd.np.corrcoef(ph, ph_cv)[1, 0] < 0:
                     cvP[[grp for grp in cvxgroups[cvround] if grp < nr]] = -ph_cv
-                    cvT.T[[grp for grp in cvygroups[cvround] if grp < nc]] = -th_cv
                 else:
                     cvP[[grp for grp in cvxgroups[cvround] if grp < nr]] = ph_cv
+                if pd.np.corrcoef(th, th_cv)[1, 0] < 0:
+                    cvT.T[[grp for grp in cvygroups[cvround] if grp < nc]] = -th_cv
+                else:
                     cvT.T[[grp for grp in cvygroups[cvround] if grp < nc]] = th_cv
             # Calculate PRESS
             if cv:
