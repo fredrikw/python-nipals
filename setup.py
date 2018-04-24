@@ -24,7 +24,7 @@ def read(*names, **kwargs):
 
 setup(
     name='nipals',
-    version='0.4.1',
+    version='0.4.2',
     license='MIT license',
     description='A module for calculation of PCA with the NIPALS algorithm',
     long_description='%s\n%s' % (

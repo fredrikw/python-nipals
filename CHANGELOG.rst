@@ -2,6 +2,11 @@
 Changelog
 =========
 
+0.4.2 (2018-04-24)
+------------------
+
+* Fixed bug with selection of starting column for cross validation of PCA
+
 0.4.1 (2018-04-09)
 ------------------
 
