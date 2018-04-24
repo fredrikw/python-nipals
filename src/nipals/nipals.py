@@ -581,9 +581,9 @@ class Nipals(object):
     def _onecomp(self, mat, comp, hasna, startcol, tol, maxiter):
         nrt, nct = mat.shape
         miss = pd.np.isnan(mat)
-        # Set t to column of X with highest var (uses original X mat)
+        # Set t to column of X with highest var
         if startcol is None:
-            xvar = pd.np.nanvar(self.x_mat, axis=0, ddof=1)
+            xvar = pd.np.nanvar(mat, axis=0, ddof=1)
             startcol_use = pd.np.where(xvar == xvar.max())[0][0]
         else:
             startcol_use = startcol
