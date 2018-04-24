@@ -414,7 +414,7 @@ def test_cv_pca():
     )
     pd.np.testing.assert_almost_equal(
         nip.Q2,
-        [0.5779837, 0.1907985]
+        [0.577648, 0.1909286]
     )
 
 
