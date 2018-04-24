@@ -2,6 +2,11 @@
 Changelog
 =========
 
+0.4.3 (2018-04-24)
+------------------
+
+* Fixed test that failed after last bug fix
+
 0.4.2 (2018-04-24)
 ------------------
 
