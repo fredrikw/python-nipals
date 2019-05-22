@@ -226,14 +226,15 @@ class PLS(object):
             self.y_df.replace([pd.np.inf, -pd.np.inf], pd.np.nan, inplace=True)
 
     def fit(
-        self,
-        ncomp=None,
-        center=True,
-        scale=True,
-        startcol=None,
-        tol=0.000001,
-        maxiter=500,
-        cv=False
+            self,
+            ncomp=None,
+            center=True,
+            scale=True,
+            startcol=None,
+            tol=0.000001,
+            maxiter=500,
+            cv=False,
+            dropzerovar=False
     ):
         """The Fit method, will fit a PLS to the X and Y data"""
         if ncomp is None:
@@ -248,15 +249,44 @@ class PLS(object):
         # Convert to np array
         self.x_mat = self.x_df.values
         self.y_mat = self.y_df.values
+        self.center = center
+        self.scale = scale
+        self.x_mean = pd.np.nanmean(self.x_mat, axis=0)
+        self.y_mean = pd.np.nanmean(self.y_mat, axis=0)
+        self.x_std = pd.np.nanstd(self.x_mat, axis=0, ddof=1)
+        self.y_std = pd.np.nanstd(self.y_mat, axis=0, ddof=1)
+
+        # check for zero variance variables
+        x_zerovar = self.x_df.columns[self.x_std == 0].tolist()
+        y_zerovar = self.y_df.columns[self.y_std == 0].tolist()
+        if len(x_zerovar) > 0:
+            if dropzerovar:
+                self.x_mat = self.x_mat[:, self.x_std != 0]
+                self.x_mean = self.x_mean[self.x_std != 0]
+                self.x_std = self.x_std[self.x_std != 0]
+                self.x_df = self.x_df.drop(x_zerovar, axis=1)
+            else:
+                raise ValueError(
+                    f"X matrix has zero variance in column(s) {x_zerovar}\n"
+                    "Recall with \"dropzerovar=True\" to drop automatically"
+                )
+        if len(y_zerovar) > 0:
+            if dropzerovar:
+                self.y_mat = self.y_mat[:, self.y_std != 0]
+                self.y_mean = self.y_mean[self.y_std != 0]
+                self.y_std = self.y_std[self.y_std != 0]
+                self.y_df = self.y_df.drop(y_zerovar, axis=1)
+            else:
+                raise ValueError(
+                    f"Y matrix has zero variance in column(s) {y_zerovar}\n"
+                    "Recall with \"dropzerovar=True\" to drop automatically"
+                )
+
         if center:
-            self.x_mean = pd.np.nanmean(self.x_mat, axis=0)
             self.x_mat = self.x_mat - self.x_mean
-            self.y_mean = pd.np.nanmean(self.y_mat, axis=0)
             self.y_mat = self.y_mat - self.y_mean
         if scale:
-            self.x_std = pd.np.nanstd(self.x_mat, axis=0, ddof=1)
             self.x_mat = self.x_mat / self.x_std
-            self.y_std = pd.np.nanstd(self.y_mat, axis=0, ddof=1)
             self.y_mat = self.y_mat / self.y_std
 
         TotalSSX = pd.np.nansum(self.x_mat*self.x_mat)
@@ -638,7 +668,8 @@ class Nipals(object):
         maxiter=500,
         startcol=None,
         eigsweep=False,
-        cv=False
+        cv=False,
+        dropzerovar=False
     ):
         """The Fit method, will fit a PCA to the X data.
 
@@ -661,16 +692,29 @@ class Nipals(object):
             )
         # Convert to np array
         self.x_mat = self.x_df.values
+        self.center = center
+        self.scale = scale
+        self.x_mean = pd.np.nanmean(self.x_mat, axis=0)
+        self.x_std = pd.np.nanstd(self.x_mat, axis=0, ddof=1)
+
+        # check for zero variance variables
+        x_zerovar = self.x_df.columns[self.x_std == 0].tolist()
+        if len(x_zerovar) > 0:
+            if dropzerovar:
+                self.x_mat = self.x_mat[:, self.x_std != 0]
+                self.x_mean = self.x_mean[self.x_std != 0]
+                self.x_std = self.x_std[self.x_std != 0]
+                self.x_df = self.x_df.drop(x_zerovar, axis=1)
+            else:
+                raise ValueError(
+                    f"X matrix has zero variance in column(s) {x_zerovar}\n"
+                    "Recall with \"dropzerovar=True\" to drop automatically"
+                )
+
         if center:
-            self.x_mean = pd.np.nanmean(self.x_mat, axis=0)
             self.x_mat = self.x_mat - self.x_mean
-        else:
-            self.x_mean = 0
         if scale:
-            self.x_std = pd.np.nanstd(self.x_mat, axis=0, ddof=1)
             self.x_mat = self.x_mat / self.x_std
-        else:
-            self.x_std = 1
 
         TotalSS = pd.np.nansum(self.x_mat*self.x_mat)
         nr, nc = self.x_mat.shape
@@ -821,7 +865,11 @@ class Nipals(object):
         )
 
     def predict(self, new_x):
-        self.new_x = (new_x - self.x_mean) / self.x_std
+        self.new_x = new_x
+        if self.center:
+            self.new_x -= self.x_mean
+        if self.scale:
+            self.new_x /= self.x_std
         self.new_x = self.new_x.fillna(0)
         self.pred = self.new_x.dot(self.loadings)
         if self.eigsweep:

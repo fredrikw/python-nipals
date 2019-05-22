@@ -194,6 +194,16 @@ def test_predict_from_pca_with_sweep():
     )
 
 
+def test_pca_zerovar():
+    tmpx = pd.DataFrame(testdata)
+    tmpx.loc[:, 'extra'] = 2.0
+    pca = nipals.Nipals(tmpx)
+    with pytest.raises(ValueError) as e_info:
+        pca.fit(2)
+    assert e_info.match("zero variance in column.*extra")
+    assert pca.fit(2, dropzerovar=True)
+
+
 def test_plot():
     nip = nipals.Nipals(testdata)
     nip.fit(ncomp=2)
@@ -339,6 +349,26 @@ def test_pls_missing_y():
     pls = nipals.PLS(oliveoil_missing_y.iloc[:, :5], oliveoil_missing_y.iloc[:, 5:])
     assert pls.fit(ncomp=2)
     pd.np.testing.assert_almost_equal(pls.scores.values, oliveoil_missing_y_scores * [-1, 1], 3)
+
+
+def test_pls_zerovar_x():
+    tmpx = oliveoil.iloc[:, :5].copy()
+    tmpx.loc[:, 'extra'] = 2.0
+    pls = nipals.PLS(tmpx, oliveoil.iloc[:, 5:])
+    with pytest.raises(ValueError) as e_info:
+        pls.fit(2)
+    assert e_info.match("zero variance in column.*extra")
+    assert pls.fit(2, dropzerovar=True)
+
+
+def test_pls_zerovar_y():
+    tmpy = oliveoil.iloc[:, 5:].copy()
+    tmpy.loc[:, 'extra'] = 2.0
+    pls = nipals.PLS(oliveoil.iloc[:, :5], tmpy)
+    with pytest.raises(ValueError) as e_info:
+        pls.fit(2)
+    assert e_info.match("zero variance in column.*extra")
+    assert pls.fit(2, dropzerovar=True)
 
 
 def test_pls_score_plot():
