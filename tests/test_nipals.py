@@ -178,6 +178,53 @@ def test_predict_from_pca():
     )
 
 
+def test_predict_from_pca_precentered():
+    centered = pd.DataFrame(testdata_full)
+    origmean = centered.mean()
+    centered = centered - origmean
+    nip = nipals.Nipals(centered)
+    assert nip.fit(center=False, ncomp=2)
+    # assert nip.fit(center=True, ncomp=2)
+    pd.np.testing.assert_almost_equal(list(nip.eig), [5.020518433605, 1.879323465996])
+    predtest = pd.DataFrame([
+        [63, 70, 98, 110, 124],
+        [51, 82, 102, 110, 108]
+    ])
+    predtest = predtest - origmean
+    assert nip.predict(predtest)
+    pd.np.testing.assert_almost_equal(
+        nip.pred.values,
+        [
+            [-1.2749312,  0.7863909],
+            [-1.5595433,  0.0705577]
+        ]
+    )
+
+
+def test_predict_from_pca_prescaled():
+    scaled = pd.DataFrame(testdata_full)
+    origstd = scaled.std(ddof=1)
+    scaled = scaled / origstd
+    nip = nipals.Nipals(scaled)
+    assert nip.fit(scale=False, ncomp=2)
+    # assert nip.fit(center=True, ncomp=2)
+    pd.np.testing.assert_almost_equal(list(nip.eig), [5.020518433605, 1.879323465996])
+    predtest = pd.DataFrame([
+        [63, 70, 98, 110, 124],
+        [51, 82, 102, 110, 108]
+    ])
+    predtest = predtest / origstd
+    assert nip.predict(predtest)
+    pd.np.testing.assert_almost_equal(
+        nip.pred.values,
+        [
+            [-1.2749312,  0.7863909],
+            [-1.5595433,  0.0705577]
+        ],
+        3
+    )
+
+
 def test_predict_from_pca_with_sweep():
     nip = nipals.Nipals(testdata)
     nip.fit(ncomp=2, eigsweep=True)
