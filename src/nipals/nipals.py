@@ -267,7 +267,7 @@ class PLS(object):
                 self.x_df = self.x_df.drop(x_zerovar, axis=1)
             else:
                 raise ValueError(
-                    "X matrix has zero variance in column(s) {x_zerovar}\n".format(x_zerovar=x_zerovar) + \
+                    "X matrix has zero variance in column(s) {x_zerovar}\n".format(x_zerovar=x_zerovar) +
                     "Recall with \"dropzerovar=True\" to drop automatically"
                 )
         if len(y_zerovar) > 0:
@@ -278,7 +278,7 @@ class PLS(object):
                 self.y_df = self.y_df.drop(y_zerovar, axis=1)
             else:
                 raise ValueError(
-                    "Y matrix has zero variance in column(s) {y_zerovar}\n".format(y_zerovar=y_zerovar) + \
+                    "Y matrix has zero variance in column(s) {y_zerovar}\n".format(y_zerovar=y_zerovar) +
                     "Recall with \"dropzerovar=True\" to drop automatically"
                 )
 
@@ -707,7 +707,7 @@ class Nipals(object):
                 self.x_df = self.x_df.drop(x_zerovar, axis=1)
             else:
                 raise ValueError(
-                    "X matrix has zero variance in column(s) {x_zerovar}\n".format(x_zerovar=x_zerovar) + \
+                    "X matrix has zero variance in column(s) {x_zerovar}\n".format(x_zerovar=x_zerovar) +
                     "Recall with \"dropzerovar=True\" to drop automatically"
                 )
 
