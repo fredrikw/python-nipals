@@ -32,6 +32,9 @@ install_req = [
     'scipy>=1.0.0,<1.3',
     'matplotlib>2.0.0,<3'
 ]
+if sys.version_info.major == 3 and sys.version_info.minor < 6:
+    # Matplotlib 3.1 and above requires Py3.6 or above
+    install_req[2] = 'matplotlib>2.0.0,<3.1'
 
 
 setup(
