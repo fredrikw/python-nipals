@@ -193,8 +193,8 @@ def simpleEllipse(x, y, alfa, length):
     """Helper function to calculate Hotelling's ellipse from scores
     Ported from the bioconductor package pcaMethods, https://doi.org/doi:10.18129/B9.bioc.pcaMethods
     Stacklies W, Redestig H, Scholz M, Walther D and Selbig J (2007).
-    “pcaMethods – a Bioconductor package providing PCA methods for incomplete data.”
-    Bioinformatics, 23, pp. 1164–1167.
+    "pcaMethods - a Bioconductor package providing PCA methods for incomplete data."
+    Bioinformatics, 23, pp. 1164-1167.
     """
     n = len(x)
     mypi = [i/(length-1)*pd.np.pi*2 for i in range(length)]
@@ -267,7 +267,7 @@ class PLS(object):
                 self.x_df = self.x_df.drop(x_zerovar, axis=1)
             else:
                 raise ValueError(
-                    f"X matrix has zero variance in column(s) {x_zerovar}\n"
+                    "X matrix has zero variance in column(s) {x_zerovar}\n".format(x_zerovar=x_zerovar) + \
                     "Recall with \"dropzerovar=True\" to drop automatically"
                 )
         if len(y_zerovar) > 0:
@@ -278,7 +278,7 @@ class PLS(object):
                 self.y_df = self.y_df.drop(y_zerovar, axis=1)
             else:
                 raise ValueError(
-                    f"Y matrix has zero variance in column(s) {y_zerovar}\n"
+                    "Y matrix has zero variance in column(s) {y_zerovar}\n".format(y_zerovar=y_zerovar) + \
                     "Recall with \"dropzerovar=True\" to drop automatically"
                 )
 
@@ -477,8 +477,8 @@ class PLS(object):
         """
         Calculates DModY for model, ported from pcaMethods
         (Stacklies W, Redestig H, Scholz M, Walther D and Selbig J (2007).
-        “pcaMethods – a Bioconductor package providing PCA methods for incomplete
-        data.” Bioinformatics, 23, pp. 1164–1167.)
+        "pcaMethods - a Bioconductor package providing PCA methods for incomplete
+        data." Bioinformatics, 23, pp. 1164-1167.)
         Modified to scale with mean
         """
         nr, nc = self.y_mat.shape
@@ -494,8 +494,8 @@ class PLS(object):
         """
         Calculates DModX for model, ported from pcaMethods
         (Stacklies W, Redestig H, Scholz M, Walther D and Selbig J (2007).
-        “pcaMethods – a Bioconductor package providing PCA methods for incomplete
-        data.” Bioinformatics, 23, pp. 1164–1167.)
+        "pcaMethods - a Bioconductor package providing PCA methods for incomplete
+        data." Bioinformatics, 23, pp. 1164-1167.)
         Modified to scale with mean
         """
         nr, nc = self.x_mat.shape
@@ -707,7 +707,7 @@ class Nipals(object):
                 self.x_df = self.x_df.drop(x_zerovar, axis=1)
             else:
                 raise ValueError(
-                    f"X matrix has zero variance in column(s) {x_zerovar}\n"
+                    "X matrix has zero variance in column(s) {x_zerovar}\n".format(x_zerovar=x_zerovar) + \
                     "Recall with \"dropzerovar=True\" to drop automatically"
                 )
 
@@ -804,8 +804,8 @@ class Nipals(object):
         """
         Calculates DModX for model, ported from pcaMethods
         (Stacklies W, Redestig H, Scholz M, Walther D and Selbig J (2007).
-        “pcaMethods – a Bioconductor package providing PCA methods for incomplete
-        data.” Bioinformatics, 23, pp. 1164–1167.)
+        "pcaMethods - a Bioconductor package providing PCA methods for incomplete
+        data." Bioinformatics, 23, pp. 1164-1167.)
         Modified to scale with mean
         """
         nr, nc = self.x_mat.shape
