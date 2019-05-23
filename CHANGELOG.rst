@@ -1,6 +1,12 @@
-
 Changelog
 =========
+
+0.5.1 (2019-05-23)
+------------------
+
+* Added checks for, and optional removal of, zero variance in variables
+* Added support for Python 3.7
+* (0.5.0 was never released due to failing CI tests)
 
 0.4.3 (2018-04-24)
 ------------------
