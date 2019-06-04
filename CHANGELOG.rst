@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.5.2 (2019-06-04)
+------------------
+
+* Added compatibility with Nipals objects saved from pre-0.5 versions
+
 0.5.1 (2019-05-23)
 ------------------
 

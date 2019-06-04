@@ -866,10 +866,14 @@ class Nipals(object):
 
     def predict(self, new_x):
         self.new_x = new_x
-        if self.center:
-            self.new_x -= self.x_mean
-        if self.scale:
-            self.new_x /= self.x_std
+        try:
+            if self.center:
+                self.new_x -= self.x_mean
+            if self.scale:
+                self.new_x /= self.x_std
+        except AttributeError:
+            # Compatibility with saved objects from pre-0.5.0 versions.
+            self.new_x = (new_x - self.x_mean) / self.x_std
         self.new_x = self.new_x.fillna(0)
         self.pred = self.new_x.dot(self.loadings)
         if self.eigsweep:
