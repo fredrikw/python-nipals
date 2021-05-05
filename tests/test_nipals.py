@@ -1,14 +1,15 @@
 import logging
 
 import matplotlib
+import numpy as np
 import pandas as pd
 import pytest
 
 from nipals import nipals
 
 testdata = [
-    [pd.np.nan, 67, 90, 98, 120],
-    [pd.np.nan, 71, 93, 102, 129],
+    [np.nan, 67, 90, 98, 120],
+    [np.nan, 71, 93, 102, 129],
     [65, 76, 95, 105, 134],
     [50, 80, 102, 130, 138],
     [60, 82, 97, 135, 151],
@@ -63,7 +64,7 @@ def test_run_pca():
     nip = nipals.Nipals(testdata)
     # Set startcol to get same results as R nipals:nipals (rounding errors give slightly different rotation otherwise)
     assert nip.fit(startcol=1)
-    pd.np.testing.assert_almost_equal(list(nip.eig), [
+    np.testing.assert_almost_equal(list(nip.eig), [
         4.876206673116805,
         2.044242214135278,
         1.072810327696312,
@@ -72,7 +73,7 @@ def test_run_pca():
     ])
     # Also run without startcol set to make sure that it works as well. But compare to self data
     assert nip.fit()
-    pd.np.testing.assert_almost_equal(list(nip.eig), [
+    np.testing.assert_almost_equal(list(nip.eig), [
         4.876216689582536,
         2.044275687396918,
         1.072805497059184,
@@ -97,7 +98,7 @@ def test_call_with_too_large_ncomp(caplog):
 def test_run_pca_without_na():
     nip = nipals.Nipals(testdata_full)
     assert nip.fit()
-    pd.np.testing.assert_almost_equal(list(nip.eig), [
+    np.testing.assert_almost_equal(list(nip.eig), [
         5.020518433605382,
         1.879323465996815,
         1.1081766447275905,
@@ -115,7 +116,7 @@ def test_fail_from_maxiter():
 def test_run_pca_with_set_ncomp():
     nip = nipals.Nipals(testdata_full)
     assert nip.fit(ncomp=2)
-    pd.np.testing.assert_almost_equal(list(nip.eig), [5.020518433605, 1.879323465996])
+    np.testing.assert_almost_equal(list(nip.eig), [5.020518433605, 1.879323465996])
 
 
 def test_run_pca_with_precentered_data():
@@ -123,7 +124,7 @@ def test_run_pca_with_precentered_data():
     centered = centered - centered.mean()
     nip = nipals.Nipals(centered)
     assert nip.fit(center=False, ncomp=2)
-    pd.np.testing.assert_almost_equal(list(nip.eig), [5.020518433605, 1.879323465996])
+    np.testing.assert_almost_equal(list(nip.eig), [5.020518433605, 1.879323465996])
 
 
 def test_run_pca_with_prescaled_data():
@@ -131,13 +132,13 @@ def test_run_pca_with_prescaled_data():
     scaled = (scaled - scaled.mean()) / scaled.std(ddof=1)
     nip = nipals.Nipals(scaled)
     assert nip.fit(center=False, scale=False, ncomp=2)
-    pd.np.testing.assert_almost_equal(list(nip.eig), [5.020518433605, 1.879323465996])
+    np.testing.assert_almost_equal(list(nip.eig), [5.020518433605, 1.879323465996])
 
 
 def test_run_pca_check_scores_with_sweep():
     nip = nipals.Nipals(testdata)
     assert nip.fit(ncomp=2, eigsweep=True, startcol=1)
-    pd.np.testing.assert_almost_equal(nip.scores.values, [
+    np.testing.assert_almost_equal(nip.scores.values, [
         [-0.5585132, 0.1224190],
         [-0.3801627, 0.1703718],
         [-0.2026926, 0.3163937],
@@ -151,7 +152,7 @@ def test_run_pca_check_scores_with_sweep():
 def test_run_pca_check_scores():
     nip = nipals.Nipals(testdata)
     assert nip.fit(ncomp=2)
-    pd.np.testing.assert_almost_equal(nip.scores.values, [
+    np.testing.assert_almost_equal(nip.scores.values, [
         [-2.72332498, 0.25021637],
         [-1.85369271, 0.34827344],
         [-0.98854112, 0.64658032],
@@ -169,7 +170,7 @@ def test_predict_from_pca():
         [63, 70, 98, 110, 124],
         [51, 82, 102, 110, 108]
     ]))
-    pd.np.testing.assert_almost_equal(
+    np.testing.assert_almost_equal(
         nip.pred.values,
         [
             [-1.4465766,  0.4500705],
@@ -185,14 +186,14 @@ def test_predict_from_pca_precentered():
     nip = nipals.Nipals(centered)
     assert nip.fit(center=False, ncomp=2)
     # assert nip.fit(center=True, ncomp=2)
-    pd.np.testing.assert_almost_equal(list(nip.eig), [5.020518433605, 1.879323465996])
+    np.testing.assert_almost_equal(list(nip.eig), [5.020518433605, 1.879323465996])
     predtest = pd.DataFrame([
         [63, 70, 98, 110, 124],
         [51, 82, 102, 110, 108]
     ])
     predtest = predtest - origmean
     assert nip.predict(predtest)
-    pd.np.testing.assert_almost_equal(
+    np.testing.assert_almost_equal(
         nip.pred.values,
         [
             [-1.2749312,  0.7863909],
@@ -208,14 +209,14 @@ def test_predict_from_pca_prescaled():
     nip = nipals.Nipals(scaled)
     assert nip.fit(scale=False, ncomp=2)
     # assert nip.fit(center=True, ncomp=2)
-    pd.np.testing.assert_almost_equal(list(nip.eig), [5.020518433605, 1.879323465996])
+    np.testing.assert_almost_equal(list(nip.eig), [5.020518433605, 1.879323465996])
     predtest = pd.DataFrame([
         [63, 70, 98, 110, 124],
         [51, 82, 102, 110, 108]
     ])
     predtest = predtest / origstd
     assert nip.predict(predtest)
-    pd.np.testing.assert_almost_equal(
+    np.testing.assert_almost_equal(
         nip.pred.values,
         [
             [-1.2749312,  0.7863909],
@@ -232,7 +233,7 @@ def test_predict_from_pca_with_sweep():
         [63, 70, 98, 110, 124],
         [51, 82, 102, 110, 108]
     ]))
-    pd.np.testing.assert_almost_equal(
+    np.testing.assert_almost_equal(
         nip.pred.values,
         [
             [-0.2966596, 0.2201614],
@@ -336,17 +337,17 @@ def test_loadings_plot():
 def test_pls():
     pls = nipals.PLS(yarn.iloc[:, :268], yarn.iloc[:, 268])
     assert pls.fit(ncomp=6, scale=False)
-    pd.np.testing.assert_almost_equal(pls.scores.values, yarn_scores)
-    pd.np.testing.assert_almost_equal(pls.loadings.values, yarn_loadings)
-    pd.np.testing.assert_almost_equal(pls.weights.values, yarn_weights)
+    np.testing.assert_almost_equal(pls.scores.values, yarn_scores)
+    np.testing.assert_almost_equal(pls.loadings.values, yarn_loadings)
+    np.testing.assert_almost_equal(pls.weights.values, yarn_weights)
 
 
 def test_pls_nocenter_and_scale():
     pls = nipals.PLS(yarn.iloc[:, :268] - yarn.iloc[:, :268].mean(), yarn.iloc[:, 268])
     assert pls.fit(ncomp=6, scale=False, center=False)
-    pd.np.testing.assert_almost_equal(pls.scores.values, yarn_scores)
-    pd.np.testing.assert_almost_equal(pls.loadings.values, yarn_loadings)
-    pd.np.testing.assert_almost_equal(pls.weights.values, yarn_weights)
+    np.testing.assert_almost_equal(pls.scores.values, yarn_scores)
+    np.testing.assert_almost_equal(pls.loadings.values, yarn_loadings)
+    np.testing.assert_almost_equal(pls.weights.values, yarn_weights)
 
 
 def test_pls_missing_x():
@@ -354,20 +355,20 @@ def test_pls_missing_x():
     csel = [171, 107, 222, 150, 76, 205, 63, 19, 121, 183]
     rsel = [23, 0, 3, 22, 15, 21, 19, 7, 19, 5]
     for r, c in zip(rsel, csel):
-        tmpx.iloc[r, c] = pd.np.nan
+        tmpx.iloc[r, c] = np.nan
     pls = nipals.PLS(tmpx, yarn.iloc[:, 268])
     assert pls.fit(ncomp=3)
-    pd.np.testing.assert_almost_equal(pls.scores.values, yarn_missing_scores, 5)
-    pd.np.testing.assert_almost_equal(pls.loadings.values, yarn_missing_loadings)
-    pd.np.testing.assert_almost_equal(pls.weights.values, yarn_missing_weights)
+    np.testing.assert_almost_equal(pls.scores.values, yarn_missing_scores, 5)
+    np.testing.assert_almost_equal(pls.loadings.values, yarn_missing_loadings)
+    np.testing.assert_almost_equal(pls.weights.values, yarn_missing_weights)
 
 
 def test_pls_nondf():
     pls = nipals.PLS(yarn.iloc[:, :268].values, yarn.iloc[:, 268].values)
     assert pls.fit(ncomp=6, scale=False)
-    pd.np.testing.assert_almost_equal(pls.scores.values, yarn_scores)
-    pd.np.testing.assert_almost_equal(pls.loadings.values, yarn_loadings)
-    pd.np.testing.assert_almost_equal(pls.weights.values, yarn_weights)
+    np.testing.assert_almost_equal(pls.scores.values, yarn_scores)
+    np.testing.assert_almost_equal(pls.loadings.values, yarn_loadings)
+    np.testing.assert_almost_equal(pls.weights.values, yarn_weights)
 
 
 def test_pls_optionvariations(caplog):
@@ -389,13 +390,13 @@ def test_pls_optionvariations(caplog):
 def test_pls_multiy():
     pls = nipals.PLS(oliveoil.iloc[:, :5], oliveoil.iloc[:, 5:])
     assert pls.fit(ncomp=2)
-    pd.np.testing.assert_almost_equal(pls.scores.values, oliveoil_scores * [-1, 1], 4)
+    np.testing.assert_almost_equal(pls.scores.values, oliveoil_scores * [-1, 1], 4)
 
 
 def test_pls_missing_y():
     pls = nipals.PLS(oliveoil_missing_y.iloc[:, :5], oliveoil_missing_y.iloc[:, 5:])
     assert pls.fit(ncomp=2)
-    pd.np.testing.assert_almost_equal(pls.scores.values, oliveoil_missing_y_scores * [-1, 1], 3)
+    np.testing.assert_almost_equal(pls.scores.values, oliveoil_missing_y_scores * [-1, 1], 3)
 
 
 def test_pls_zerovar_x():
@@ -459,7 +460,7 @@ def test_pls_load_plot_with_markers():
 
 
 def test_inf_values_in_dfs(caplog):
-    olive_inf = oliveoil.replace([18.7, 75.1], pd.np.inf)
+    olive_inf = oliveoil.replace([18.7, 75.1], np.inf)
     nipals.Nipals(olive_inf)
     nipals.PLS(olive_inf.iloc[:, :5], olive_inf.iloc[:, 5:])
     assert caplog.record_tuples == [
@@ -485,11 +486,11 @@ def test_cv_pca():
     nip = nipals.Nipals(testdata_class)
     assert nip.fit(ncomp=2, cv=True)
     assert nip.fit(ncomp=2, cv=4)
-    pd.np.testing.assert_almost_equal(
+    np.testing.assert_almost_equal(
         nip.R2,
         [0.8112004, 0.144992]
     )
-    pd.np.testing.assert_almost_equal(
+    np.testing.assert_almost_equal(
         nip.Q2,
         [0.577648, 0.1909286]
     )
@@ -501,7 +502,7 @@ def test_cv_pca_with_fliped_axis():
     assert nip.fit(ncomp=2, cv=True, startcol=2)
     Q2_sc2 = nip.Q2.values
     assert nip.fit(ncomp=2, cv=True)
-    pd.np.testing.assert_almost_equal(
+    np.testing.assert_almost_equal(
         nip.Q2,
         Q2_sc2,
         3
@@ -512,15 +513,15 @@ def test_cv_pls():
     pls = nipals.PLS(oliveoil.iloc[:, :5], oliveoil.iloc[:, 5:])
     assert pls.fit(ncomp=2, cv=True)
     assert pls.fit(ncomp=2, cv=4)
-    pd.np.testing.assert_almost_equal(
+    np.testing.assert_almost_equal(
         pls.Q2,
         [0.2684853, 0.0644187]
     )
-    pd.np.testing.assert_almost_equal(
+    np.testing.assert_almost_equal(
         pls.R2X,
         [0.5826444, 0.2367458]
     )
-    pd.np.testing.assert_almost_equal(
+    np.testing.assert_almost_equal(
         pls.R2Y,
         [0.4326835, 0.0856207]
     )
@@ -529,7 +530,7 @@ def test_cv_pls():
 def test_dmodx_pca():
     nip = nipals.Nipals(testdata_class)
     assert nip.fit(ncomp=2)
-    pd.np.testing.assert_almost_equal(
+    np.testing.assert_almost_equal(
         nip.dModX(),
         [
             0.5364634, 0.3480396, 0.5702191,
@@ -558,7 +559,7 @@ def test_overviewplotplot_pca():
 def test_dmod_pls():
     pls = nipals.PLS(oliveoil.iloc[:, :5], oliveoil.iloc[:, 5:])
     assert pls.fit(ncomp=2)
-    pd.np.testing.assert_almost_equal(
+    np.testing.assert_almost_equal(
         pls.dModX(),
         [
             0.8561775, 0.6808639, 1.2475466, 1.9522224,
@@ -567,7 +568,7 @@ def test_dmod_pls():
             0.7637504, 0.3900809, 0.7382779, 0.7063927
         ]
     )
-    pd.np.testing.assert_almost_equal(
+    np.testing.assert_almost_equal(
         pls.dModY(),
         [
             0.5728738, 2.0598601, 1.2420525, 0.5257193, 1.4290988, 0.7752674,

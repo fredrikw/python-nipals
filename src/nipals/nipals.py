@@ -4,6 +4,7 @@ import logging
 # logging.basicConfig(level=logging.INFO)
 import math
 
+import numpy as np
 import pandas as pd
 from scipy.stats import f
 
@@ -35,7 +36,7 @@ def _plot(
         markers = ['s', '^', 'v', 'o', '<', '>', 'D', 'p']
     if classlevels:
         if not classcolors:
-            classcolors = [str(f) for f in pd.np.linspace(0, 1, len(classlevels)+1)[1:]]
+            classcolors = [str(f) for f in np.linspace(0, 1, len(classlevels)+1)[1:]]
         ax = modelinstance.scores.xs(1, level=classlevels[0]).plot(
             kind='scatter',
             x=comps[0], y=comps[1], figsize=figsize, s=msize, zorder=3,
@@ -197,10 +198,10 @@ def simpleEllipse(x, y, alfa, length):
     Bioinformatics, 23, pp. 1164-1167.
     """
     n = len(x)
-    mypi = [i/(length-1)*pd.np.pi*2 for i in range(length)]
-    r1 = pd.np.sqrt(x.var() * f.ppf(alfa, 2, n-2) * 2 * (n**2 - 1) / (n * (n - 2)))
-    r2 = pd.np.sqrt(y.var() * f.ppf(alfa, 2, n-2) * 2 * (n**2 - 1) / (n * (n - 2)))
-    return r1 * pd.np.cos(mypi) + x.mean(), r2 * pd.np.sin(mypi) + y.mean()
+    mypi = [i/(length-1)*np.pi*2 for i in range(length)]
+    r1 = np.sqrt(x.var() * f.ppf(alfa, 2, n-2) * 2 * (n**2 - 1) / (n * (n - 2)))
+    r2 = np.sqrt(y.var() * f.ppf(alfa, 2, n-2) * 2 * (n**2 - 1) / (n * (n - 2)))
+    return r1 * np.cos(mypi) + x.mean(), r2 * np.sin(mypi) + y.mean()
 
 
 class PLS(object):
@@ -218,12 +219,12 @@ class PLS(object):
         self.x_df = x_df.astype('float')
         self.y_df = y_df.astype('float')
         # Check for and remove infs
-        if pd.np.isinf(self.x_df).any().any():
+        if np.isinf(self.x_df).any().any():
             logging.warning("X data contained infinite values, converting to missing values")
-            self.x_df.replace([pd.np.inf, -pd.np.inf], pd.np.nan, inplace=True)
-        if pd.np.isinf(self.y_df).any().any():
+            self.x_df.replace([np.inf, -np.inf], np.nan, inplace=True)
+        if np.isinf(self.y_df).any().any():
             logging.warning("Y data contained infinite values, converting to missing values")
-            self.y_df.replace([pd.np.inf, -pd.np.inf], pd.np.nan, inplace=True)
+            self.y_df.replace([np.inf, -np.inf], np.nan, inplace=True)
 
     def fit(
             self,
@@ -251,10 +252,10 @@ class PLS(object):
         self.y_mat = self.y_df.values
         self.center = center
         self.scale = scale
-        self.x_mean = pd.np.nanmean(self.x_mat, axis=0)
-        self.y_mean = pd.np.nanmean(self.y_mat, axis=0)
-        self.x_std = pd.np.nanstd(self.x_mat, axis=0, ddof=1)
-        self.y_std = pd.np.nanstd(self.y_mat, axis=0, ddof=1)
+        self.x_mean = np.nanmean(self.x_mat, axis=0)
+        self.y_mean = np.nanmean(self.y_mat, axis=0)
+        self.x_std = np.nanstd(self.x_mat, axis=0, ddof=1)
+        self.y_std = np.nanstd(self.y_mat, axis=0, ddof=1)
 
         # check for zero variance variables
         x_zerovar = self.x_df.columns[self.x_std == 0].tolist()
@@ -289,26 +290,26 @@ class PLS(object):
             self.x_mat = self.x_mat / self.x_std
             self.y_mat = self.y_mat / self.y_std
 
-        TotalSSX = pd.np.nansum(self.x_mat*self.x_mat)
-        TotalSSY = pd.np.nansum(self.y_mat*self.y_mat)
+        TotalSSX = np.nansum(self.x_mat*self.x_mat)
+        TotalSSY = np.nansum(self.y_mat*self.y_mat)
         nr, x_nc = self.x_mat.shape
         y_nc = self.y_mat.shape[1]
         # initialize outputs
-        # eig = pd.np.empty((ncomp,))
-        R2Xcum = pd.np.empty((ncomp,))
-        R2Ycum = pd.np.empty((ncomp,))
-        PRESS_SS = pd.np.empty((ncomp,))
-        loadings = pd.np.empty((x_nc, ncomp))
-        scores = pd.np.empty((nr, ncomp))
-        u = pd.np.empty((nr, ncomp))
-        weights = pd.np.empty((x_nc, ncomp))
-        q = pd.np.empty((y_nc, ncomp))
-        b = pd.np.empty((ncomp,))
+        # eig = np.empty((ncomp,))
+        R2Xcum = np.empty((ncomp,))
+        R2Ycum = np.empty((ncomp,))
+        PRESS_SS = np.empty((ncomp,))
+        loadings = np.empty((x_nc, ncomp))
+        scores = np.empty((nr, ncomp))
+        u = np.empty((nr, ncomp))
+        weights = np.empty((x_nc, ncomp))
+        q = np.empty((y_nc, ncomp))
+        b = np.empty((ncomp,))
 
         # NA handling
-        x_miss = pd.np.isnan(self.x_mat)
+        x_miss = np.isnan(self.x_mat)
         x_hasna = x_miss.any()
-        y_miss = pd.np.isnan(self.y_mat)
+        y_miss = np.isnan(self.y_mat)
         y_hasna = y_miss.any()
         if x_hasna or y_hasna:
             logging.info("Data has NA values")
@@ -316,8 +317,8 @@ class PLS(object):
         if cv:
             if cv is True:
                 cv = 7
-            cvn = int(pd.np.ceil(nr / cv))
-            cvgroups = pd.np.array(range(cvn * cv)).reshape(cvn, cv).T
+            cvn = int(np.ceil(nr / cv))
+            cvgroups = np.array(range(cvn * cv)).reshape(cvn, cv).T
         else:
             cv = 0
         for comp in range(ncomp):
@@ -328,55 +329,55 @@ class PLS(object):
                     train_x_mat = self.x_mat
                     train_y_mat = self.y_mat
                 else:
-                    train_x_mat = pd.np.delete(
+                    train_x_mat = np.delete(
                         self.x_mat,
                         [skp for skp in cvgroups[cvround] if skp < self.x_mat.shape[0]],
                         0
                     )
-                    train_y_mat = pd.np.delete(
+                    train_y_mat = np.delete(
                         self.y_mat,
                         [skp for skp in cvgroups[cvround] if skp < self.y_mat.shape[0]],
                         0
                     )
                 nrt, x_nct = train_x_mat.shape
                 y_nct = train_y_mat.shape[1]
-                train_x_miss = pd.np.isnan(train_x_mat)
-                train_y_miss = pd.np.isnan(train_y_mat)
+                train_x_miss = np.isnan(train_x_mat)
+                train_y_miss = np.isnan(train_y_mat)
                 # Set u to some column of Y
                 if startcol is None:
-                    yvar = pd.np.nanvar(self.y_mat, axis=0, ddof=1)
-                    startcol_use = pd.np.where(yvar == yvar.max())[0][0]
+                    yvar = np.nanvar(self.y_mat, axis=0, ddof=1)
+                    startcol_use = np.where(yvar == yvar.max())[0][0]
                 else:
                     startcol_use = startcol
                 logging.info("PC {}, starting with column {}".format(comp, startcol_use))
 
                 if y_hasna:
-                    train_y_mat_0 = pd.np.nan_to_num(train_y_mat)
+                    train_y_mat_0 = np.nan_to_num(train_y_mat)
                     uh = train_y_mat_0[:, startcol_use]
                 else:
                     uh = train_y_mat[:, startcol_use]
                 th = uh
 
                 if x_hasna:
-                    train_x_mat_0 = pd.np.nan_to_num(train_x_mat)
+                    train_x_mat_0 = np.nan_to_num(train_x_mat)
 
                 it = 0
                 while True:
                     # X-block weights
                     if x_hasna:
-                        U2 = pd.np.repeat(uh*uh, x_nct)
+                        U2 = np.repeat(uh*uh, x_nct)
                         U2.shape = (nrt, x_nct)
                         U2[train_x_miss] = 0
                         wh = train_x_mat_0.T.dot(uh) / U2.sum(axis=0)
                     else:
                         wh = train_x_mat.T.dot(uh) / sum(uh*uh)
                     # Normalize
-                    wh = wh / math.sqrt(pd.np.nansum(wh*wh))
+                    wh = wh / math.sqrt(np.nansum(wh*wh))
 
                     # X-block Scores
                     th_old = th
                     if x_hasna:
-                        W2 = pd.np.repeat(wh*wh, nrt)
+                        W2 = np.repeat(wh*wh, nrt)
                         W2.shape = (x_nct, nrt)
                         W2[train_x_miss.T] = 0
                         th = train_x_mat_0.dot(wh) / W2.sum(axis=0)
@@ -385,7 +386,7 @@ class PLS(object):
 
                     # Y-block weights
                     if y_hasna:
-                        T2 = pd.np.repeat(th*th, y_nct)
+                        T2 = np.repeat(th*th, y_nct)
                         T2.shape = (nrt, y_nct)
                         T2[train_y_miss] = 0
                         qh = train_y_mat_0.T.dot(th) / T2.sum(axis=0)
@@ -395,11 +396,11 @@ class PLS(object):
                     # According to Analytica Chimica Acta, 186 (1986) 1-17 this normalization
                     # should be done. However, if so, the results are not the same as th R package
                     # pls plsr method or Evince.
-                    # qh = qh / math.sqrt(pd.np.nansum(qh*qh))
+                    # qh = qh / math.sqrt(np.nansum(qh*qh))
 
                     # Y-block Scores
                     if y_hasna:
-                        Q2 = pd.np.repeat(qh*qh, nrt)
+                        Q2 = np.repeat(qh*qh, nrt)
                         Q2.shape = (y_nct, nrt)
                         Q2[train_y_miss.T] = 0
                         uh = train_y_mat_0.dot(qh) / Q2.sum(axis=0)
@@ -407,7 +408,7 @@ class PLS(object):
                         uh = train_y_mat.dot(qh) / sum(qh*qh)
 
                     # Check convergence
-                    if pd.np.nansum((th-th_old)**2) < tol:
+                    if np.nansum((th-th_old)**2) < tol:
                         break
                     it += 1
                     if it >= maxiter:
@@ -421,18 +422,18 @@ class PLS(object):
                 if cvround < cv:
                     pred_x_mat = self.x_mat[[i for i in cvgroups[cvround] if i < nr]]
                     pred_y_mat = self.y_mat[[i for i in cvgroups[cvround] if i < nr]]
-                    pred_x_mat = pd.np.nan_to_num(pred_x_mat)
+                    pred_x_mat = np.nan_to_num(pred_x_mat)
                     cv_th = pred_x_mat.dot(wh) / sum(wh*wh)
                     cv_bh = sum(uh*th)/sum(th**2)
-                    cv_res = pred_y_mat - cv_bh*pd.np.outer(cv_th, qh)
-                    cv_res[pd.np.isnan(pred_y_mat)] = 0
-                    PRESS += pd.np.sum(cv_res**2)
+                    cv_res = pred_y_mat - cv_bh*np.outer(cv_th, qh)
+                    cv_res[np.isnan(pred_y_mat)] = 0
+                    PRESS += np.sum(cv_res**2)
 
-            PRESS_SS[comp] = PRESS / pd.np.nansum(self.y_mat*self.y_mat)
+            PRESS_SS[comp] = PRESS / np.nansum(self.y_mat*self.y_mat)
 
             # Calculate X loadings and rescale the scores and weights
             if x_hasna:
-                T2 = pd.np.repeat(th*th, x_nc)
+                T2 = np.repeat(th*th, x_nc)
                 T2.shape = (nr, x_nc)
                 T2[x_miss] = 0
                 ph = train_x_mat_0.T.dot(th) / T2.sum(axis=0)
@@ -442,7 +443,7 @@ class PLS(object):
             # According to Analytica Chimica Acta, 186 (1986) 1-17 this normalization
             # should be done. However, if so, the results are not the same as th R package
             # pls plsr method or Evince.
-            # pold_len = math.sqrt(pd.np.nansum(ph*ph))
+            # pold_len = math.sqrt(np.nansum(ph*ph))
             # ph = ph / pold_len
             # th = th * pold_len
             # wh = wh * pold_len
@@ -454,23 +455,23 @@ class PLS(object):
             bh = sum(uh*th)/sum(th**2)
             b[comp] = bh
 
-            self.x_mat = self.x_mat - pd.np.outer(th, ph)
-            self.y_mat = self.y_mat - bh*pd.np.outer(th, qh)
+            self.x_mat = self.x_mat - np.outer(th, ph)
+            self.y_mat = self.y_mat - bh*np.outer(th, qh)
 
             # Cumulative proportion of variance explained
-            R2Xcum[comp] = 1 - (pd.np.nansum(self.x_mat*self.x_mat) / TotalSSX)
-            R2Ycum[comp] = 1 - (pd.np.nansum(self.y_mat*self.y_mat) / TotalSSY)
+            R2Xcum[comp] = 1 - (np.nansum(self.x_mat*self.x_mat) / TotalSSX)
+            R2Ycum[comp] = 1 - (np.nansum(self.y_mat*self.y_mat) / TotalSSY)
 
         # "Uncumulate" R2
-        self.R2X = pd.np.insert(pd.np.diff(R2Xcum), 0, R2Xcum[0])
-        self.R2Y = pd.np.insert(pd.np.diff(R2Ycum), 0, R2Ycum[0])
+        self.R2X = np.insert(np.diff(R2Xcum), 0, R2Xcum[0])
+        self.R2Y = np.insert(np.diff(R2Ycum), 0, R2Ycum[0])
         self.R2Xcum = pd.Series(R2Xcum, index=["PC{}".format(i+1) for i in range(ncomp)])
         self.R2Ycum = pd.Series(R2Ycum, index=["PC{}".format(i+1) for i in range(ncomp)])
 
         if cv:
             self.PRESS_SS = pd.Series(PRESS_SS, index=["PC{}".format(i+1) for i in range(ncomp)])
             self.Q2 = 1 - self.PRESS_SS
-            self.Q2cum = 1 - pd.np.cumprod(self.PRESS_SS)
+            self.Q2cum = 1 - np.cumprod(self.PRESS_SS)
 
         # Convert results to DataFrames
         self.scores = pd.DataFrame(scores, index=self.x_df.index, columns=["PC{}".format(i+1) for i in range(ncomp)])
@@ -492,10 +493,10 @@ class PLS(object):
         nr, nc = self.y_mat.shape
         ncomp = self.scores.shape[1]
         A0 = 0 if type(self.y_mean) == int else 1
-        ny = pd.np.sqrt(nr / (nr - ncomp - A0))
+        ny = np.sqrt(nr / (nr - ncomp - A0))
         F2 = self.y_mat*self.y_mat
-        s = pd.np.sqrt(pd.np.nansum(F2, axis=1) / (nc - ncomp)) * ny
-        S0 = pd.np.sqrt(pd.np.nansum(F2)/((nr - ncomp - A0) * (nc - ncomp)))
+        s = np.sqrt(np.nansum(F2, axis=1) / (nc - ncomp)) * ny
+        S0 = np.sqrt(np.nansum(F2)/((nr - ncomp - A0) * (nc - ncomp)))
         return s/S0
 
     def dModX(self):
@@ -509,10 +510,10 @@ class PLS(object):
         nr, nc = self.x_mat.shape
         ncomp = self.scores.shape[1]
         A0 = 0 if type(self.x_mean) == int else 1
-        ny = pd.np.sqrt(nr / (nr - ncomp - A0))
+        ny = np.sqrt(nr / (nr - ncomp - A0))
         E2 = self.x_mat*self.x_mat
-        s = pd.np.sqrt(pd.np.nansum(E2, axis=1) / (nc - ncomp)) * ny
-        S0 = pd.np.sqrt(pd.np.nansum(E2)/((nr - ncomp - A0) * (nc - ncomp)))
+        s = np.sqrt(np.nansum(E2, axis=1) / (nc - ncomp)) * ny
+        S0 = np.sqrt(np.nansum(E2)/((nr - ncomp - A0) * (nc - ncomp)))
         return s/S0
 
     def plot(
@@ -583,7 +584,7 @@ class PLS(object):
         nr, nc = self.x_mat.shape
         ncomp = self.scores.shape[1]
         A0 = 0 if type(self.x_mean) == int else 1
-        fc = pd.np.sqrt(f.isf(0.05, nr - ncomp - A0, nc - ncomp))
+        fc = np.sqrt(f.isf(0.05, nr - ncomp - A0, nc - ncomp))
         ax = pd.Series(dmx, index=self.x_df.index.get_level_values(0)).plot(kind='bar', color='green')
         ax.hlines(fc, -1, 20)
         return ax.figure
@@ -593,7 +594,7 @@ class PLS(object):
         nr, nc = self.y_mat.shape
         ncomp = self.scores.shape[1]
         A0 = 0 if type(self.y_mean) == int else 1
-        fc = pd.np.sqrt(f.isf(0.05, nr - ncomp - A0, nc - ncomp))
+        fc = np.sqrt(f.isf(0.05, nr - ncomp - A0, nc - ncomp))
         ax = pd.Series(dmy, index=self.y_df.index.get_level_values(0)).plot(kind='bar', color='green')
         ax.hlines(fc, -1, 20)
         return ax.figure
@@ -612,23 +613,23 @@ class Nipals(object):
         # Make sure data is numeric
         self.x_df = x_df.astype('float')
         # Check for and remove infs
-        if pd.np.isinf(self.x_df).any().any():
+        if np.isinf(self.x_df).any().any():
             logging.warning("Data contained infinite values, converting to missing values")
-            self.x_df.replace([pd.np.inf, -pd.np.inf], pd.np.nan, inplace=True)
+            self.x_df.replace([np.inf, -np.inf], np.nan, inplace=True)
 
     def _onecomp(self, mat, comp, hasna, startcol, tol, maxiter):
         nrt, nct = mat.shape
-        miss = pd.np.isnan(mat)
+        miss = np.isnan(mat)
         # Set t to column of X with highest var
         if startcol is None:
-            xvar = pd.np.nanvar(mat, axis=0, ddof=1)
-            startcol_use = pd.np.where(xvar == xvar.max())[0][0]
+            xvar = np.nanvar(mat, axis=0, ddof=1)
+            startcol_use = np.where(xvar == xvar.max())[0][0]
         else:
             startcol_use = startcol
         logging.info("PC {}, starting with column {}".format(comp, startcol_use))
 
         if hasna:
-            mat_0 = pd.np.nan_to_num(mat)
+            mat_0 = np.nan_to_num(mat)
             th = mat_0[:, startcol_use]
         else:
             th = mat[:, startcol_use]
@@ -636,19 +637,19 @@ class Nipals(object):
         while True:
             # loadings
             if hasna:
-                T2 = pd.np.repeat(th*th, nct)
+                T2 = np.repeat(th*th, nct)
                 T2.shape = (nrt, nct)
                 T2[miss] = 0
                 ph = mat_0.T.dot(th) / T2.sum(axis=0)
             else:
                 ph = mat.T.dot(th) / sum(th*th)
             # Normalize
-            ph = ph / math.sqrt(pd.np.nansum(ph*ph))
+            ph = ph / math.sqrt(np.nansum(ph*ph))
 
             # Scores
             th_old = th
             if hasna:
-                P2 = pd.np.repeat(ph*ph, nrt)
+                P2 = np.repeat(ph*ph, nrt)
                 P2.shape = (nct, nrt)
                 P2[miss.T] = 0
                 th = mat_0.dot(ph) / P2.sum(axis=0)
@@ -656,7 +657,7 @@ class Nipals(object):
                 th = mat.dot(ph) / sum(ph*ph)
 
             # Check convergence
-            if pd.np.nansum((th-th_old)**2) < tol:
+            if np.nansum((th-th_old)**2) < tol:
                 break
             it += 1
             if it >= maxiter:
@@ -702,8 +703,8 @@ class Nipals(object):
         self.x_mat = self.x_df.values
         self.center = center
         self.scale = scale
-        self.x_mean = pd.np.nanmean(self.x_mat, axis=0)
-        self.x_std = pd.np.nanstd(self.x_mat, axis=0, ddof=1)
+        self.x_mean = np.nanmean(self.x_mat, axis=0)
+        self.x_std = np.nanstd(self.x_mat, axis=0, ddof=1)
 
         # check for zero variance variables
         x_zerovar = self.x_df.columns[self.x_std == 0].tolist()
@@ -724,60 +725,60 @@ class Nipals(object):
         if scale:
             self.x_mat = self.x_mat / self.x_std
 
-        TotalSS = pd.np.nansum(self.x_mat*self.x_mat)
+        TotalSS = np.nansum(self.x_mat*self.x_mat)
         nr, nc = self.x_mat.shape
         # initialize outputs
-        eig = pd.np.empty((ncomp,))
-        R2cum = pd.np.empty((ncomp,))
-        PRESS_SS = pd.np.empty((ncomp,))
-        loadings = pd.np.empty((nc, ncomp))
-        scores = pd.np.empty((nr, ncomp))
+        eig = np.empty((ncomp,))
+        R2cum = np.empty((ncomp,))
+        PRESS_SS = np.empty((ncomp,))
+        loadings = np.empty((nc, ncomp))
+        scores = np.empty((nr, ncomp))
 
         # NA handling
-        x_miss = pd.np.isnan(self.x_mat)
+        x_miss = np.isnan(self.x_mat)
         hasna = x_miss.any()
         if hasna:
             logging.info("Data has NA values")
 
-        # self.x_mat_0 = pd.np.nan_to_num(self.x_mat)
+        # self.x_mat_0 = np.nan_to_num(self.x_mat)
         # t = [None] * ncomp
         # p = [None] * ncomp
         self.eig = []
         if cv:
             if cv is True:
                 cv = 7
-            cvxn = int(pd.np.ceil(nr / cv))
-            cvxgroups = pd.np.array(range(cvxn * cv)).reshape(cvxn, cv).T
-            cvyn = int(pd.np.ceil(nc / cv))
-            cvygroups = pd.np.array(range(cvyn * cv)).reshape(cvyn, cv).T
+            cvxn = int(np.ceil(nr / cv))
+            cvxgroups = np.array(range(cvxn * cv)).reshape(cvxn, cv).T
+            cvyn = int(np.ceil(nc / cv))
+            cvygroups = np.array(range(cvyn * cv)).reshape(cvyn, cv).T
         else:
             cv = 0
         for comp in range(ncomp):
             # Matrixes to keep ps and ts from cv folds
-            cvP = pd.np.empty((nr, nc))
-            cvT = pd.np.empty((nr, nc))
+            cvP = np.empty((nr, nc))
+            cvT = np.empty((nr, nc))
             PRESS = 0
             # Calculate on full matrix
             th, ph = self._onecomp(self.x_mat, comp, hasna, startcol, tol, maxiter)
             for cvround in range(cv):
-                train_mat = pd.np.delete(
+                train_mat = np.delete(
                     self.x_mat,
                     [skp for skp in cvxgroups[cvround] if skp < self.x_mat.shape[0]],
                     0
                 )
                 _, ph_cv = self._onecomp(train_mat, comp, hasna, startcol, tol, maxiter)
-                train_mat = pd.np.delete(
+                train_mat = np.delete(
                     self.x_mat,
                     [skp for skp in cvygroups[cvround] if skp < self.x_mat.shape[1]],
                     1
                 )
                 th_cv, _ = self._onecomp(train_mat, comp, hasna, startcol, tol, maxiter)
                 # Make sure the PCs are rotated in the same main direction for all cvs
-                if pd.np.corrcoef(ph, ph_cv)[1, 0] < 0:
+                if np.corrcoef(ph, ph_cv)[1, 0] < 0:
                     cvP[[grp for grp in cvxgroups[cvround] if grp < nr]] = -ph_cv
                 else:
                     cvP[[grp for grp in cvxgroups[cvround] if grp < nr]] = ph_cv
-                if pd.np.corrcoef(th, th_cv)[1, 0] < 0:
+                if np.corrcoef(th, th_cv)[1, 0] < 0:
                     cvT.T[[grp for grp in cvygroups[cvround] if grp < nc]] = -th_cv
                 else:
                     cvT.T[[grp for grp in cvygroups[cvround] if grp < nc]] = th_cv
@@ -786,30 +787,30 @@ class Nipals(object):
                 pred_mat = cvP * cvT
                 cv_res = self.x_mat - pred_mat
                 cv_res[x_miss] = 0
-                PRESS = pd.np.sum(cv_res**2)
+                PRESS = np.sum(cv_res**2)
 
-            PRESS_SS[comp] = PRESS / pd.np.nansum(self.x_mat*self.x_mat)
+            PRESS_SS[comp] = PRESS / np.nansum(self.x_mat*self.x_mat)
             # Update X
-            self.x_mat = self.x_mat - pd.np.outer(th, ph)
+            self.x_mat = self.x_mat - np.outer(th, ph)
             loadings[:, comp] = ph
             scores[:, comp] = th
-            eig[comp] = pd.np.nansum(th*th)
+            eig[comp] = np.nansum(th*th)
 
             # Cumulative proportion of variance explained
-            R2cum[comp] = 1 - (pd.np.nansum(self.x_mat*self.x_mat) / TotalSS)
+            R2cum[comp] = 1 - (np.nansum(self.x_mat*self.x_mat) / TotalSS)
 
         # "Uncumulate" R2
-        self.R2 = pd.np.insert(pd.np.diff(R2cum), 0, R2cum[0])
+        self.R2 = np.insert(np.diff(R2cum), 0, R2cum[0])
         self.R2cum = pd.Series(R2cum, index=["PC{}".format(i+1) for i in range(ncomp)])
 
         # Finalize eigenvalues and subtract from scores
-        self.eig = pd.Series(pd.np.sqrt(eig))
+        self.eig = pd.Series(np.sqrt(eig))
         if self.eigsweep:
             scores = scores / self.eig.values
         if cv:
             self.PRESS_SS = pd.Series(PRESS_SS, index=["PC{}".format(i+1) for i in range(ncomp)])
             self.Q2 = 1 - self.PRESS_SS
-            self.Q2cum = 1 - pd.np.cumprod(self.PRESS_SS)
+            self.Q2cum = 1 - np.cumprod(self.PRESS_SS)
 
         # Convert results to DataFrames
         self.scores = pd.DataFrame(scores, index=self.x_df.index, columns=["PC{}".format(i+1) for i in range(ncomp)])
@@ -827,10 +828,10 @@ class Nipals(object):
         nr, nc = self.x_mat.shape
         ncomp = self.scores.shape[1]
         A0 = 0 if type(self.x_mean) == int else 1
-        ny = pd.np.sqrt(nr / (nr - ncomp - A0))
+        ny = np.sqrt(nr / (nr - ncomp - A0))
         E2 = self.x_mat*self.x_mat
-        s = pd.np.sqrt(pd.np.nansum(E2, axis=1) / (nc - ncomp)) * ny
-        S0 = pd.np.sqrt(pd.np.nansum(E2)/((nr - ncomp - A0) * (nc - ncomp)))
+        s = np.sqrt(np.nansum(E2, axis=1) / (nc - ncomp)) * ny
+        S0 = np.sqrt(np.nansum(E2)/((nr - ncomp - A0) * (nc - ncomp)))
         return s/S0
 
     def loadingsplot(
@@ -910,7 +911,7 @@ class Nipals(object):
         nr, nc = self.x_mat.shape
         ncomp = self.scores.shape[1]
         A0 = 0 if type(self.x_mean) == int else 1
-        fc = pd.np.sqrt(f.isf(0.05, nr - ncomp - A0, nc - ncomp))
+        fc = np.sqrt(f.isf(0.05, nr - ncomp - A0, nc - ncomp))
         ax = pd.Series(dmx, index=self.x_df.index.get_level_values(0)).plot(kind='bar', color='green')
         ax.hlines(fc, -1, 20)
         return ax.figure
