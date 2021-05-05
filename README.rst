@@ -8,13 +8,17 @@ Overview
     :stub-columns: 1
 
     * - docs
-      - |docs|
+      - | |docs|
     * - tests
-      - | |travis| |appveyor| |requires|
+      - | |ghaction| |travis| |appveyor| |requires|
         | |codecov|
     * - package
       - | |version| |wheel| |supported-versions| |supported-implementations|
         | |commits-since|
+
+.. |ghaction| image:: https://github.com/fredrikw/python-nipals/actions/workflows/python-package.yml/badge.svg
+    :target: https://github.com/fredrikw/python-nipals/actions/workflows/python-package.yml
+    :alt: Python package
 
 .. |docs| image:: https://readthedocs.org/projects/python-nipals/badge/?style=flat
     :target: https://readthedocs.org/projects/python-nipals
