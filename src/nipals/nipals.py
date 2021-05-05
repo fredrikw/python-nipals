@@ -328,8 +328,16 @@ class PLS(object):
                     train_x_mat = self.x_mat
                     train_y_mat = self.y_mat
                 else:
-                    train_x_mat = pd.np.delete(self.x_mat, cvgroups[cvround], 0)
-                    train_y_mat = pd.np.delete(self.y_mat, cvgroups[cvround], 0)
+                    train_x_mat = pd.np.delete(
+                        self.x_mat,
+                        [skp for skp in cvgroups[cvround] if skp < self.x_mat.shape[0]],
+                        0
+                    )
+                    train_y_mat = pd.np.delete(
+                        self.y_mat,
+                        [skp for skp in cvgroups[cvround] if skp < self.y_mat.shape[0]],
+                        0
+                    )
                 nrt, x_nct = train_x_mat.shape
                 y_nct = train_y_mat.shape[1]
                 train_x_miss = pd.np.isnan(train_x_mat)
@@ -752,9 +760,17 @@ class Nipals(object):
             # Calculate on full matrix
             th, ph = self._onecomp(self.x_mat, comp, hasna, startcol, tol, maxiter)
             for cvround in range(cv):
-                train_mat = pd.np.delete(self.x_mat, cvxgroups[cvround], 0)
+                train_mat = pd.np.delete(
+                    self.x_mat,
+                    [skp for skp in cvxgroups[cvround] if skp < self.x_mat.shape[0]],
+                    0
+                )
                 _, ph_cv = self._onecomp(train_mat, comp, hasna, startcol, tol, maxiter)
-                train_mat = pd.np.delete(self.x_mat, cvygroups[cvround], 1)
+                train_mat = pd.np.delete(
+                    self.x_mat,
+                    [skp for skp in cvygroups[cvround] if skp < self.x_mat.shape[1]],
+                    1
+                )
                 th_cv, _ = self._onecomp(train_mat, comp, hasna, startcol, tol, maxiter)
                 # Make sure the PCs are rotated in the same main direction for all cvs
                 if pd.np.corrcoef(ph, ph_cv)[1, 0] < 0:
