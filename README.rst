@@ -44,9 +44,9 @@ Overview
     :alt: PyPI Package latest release
     :target: https://pypi.org/project/nipals/
 
-.. |commits-since| image:: https://img.shields.io/github/commits-since/fredrikw/python-nipals/v0.5.2.svg
+.. |commits-since| image:: https://img.shields.io/github/commits-since/fredrikw/python-nipals/v0.5.3.svg
     :alt: Commits since latest release
-    :target: https://github.com/fredrikw/python-nipals/compare/v0.5.2...master
+    :target: https://github.com/fredrikw/python-nipals/compare/v0.5.3...master
 
 .. |wheel| image:: https://img.shields.io/pypi/wheel/nipals.svg
     :alt: PyPI Wheel
