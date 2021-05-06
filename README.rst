@@ -10,15 +10,18 @@ Overview
     * - docs
       - | |docs|
     * - tests
-      - | |ghaction| |travis| |appveyor| |requires|
-        | |codecov|
+      - | |ghaction| |requires| |codecov| |codeql|
     * - package
       - | |version| |wheel| |supported-versions| |supported-implementations|
         | |commits-since|
 
 .. |ghaction| image:: https://github.com/fredrikw/python-nipals/actions/workflows/python-package.yml/badge.svg
     :target: https://github.com/fredrikw/python-nipals/actions/workflows/python-package.yml
-    :alt: Python package
+    :alt: Python Package
+
+.. |codeql| image:: https://github.com/fredrikw/python-nipals/actions/workflows/codeql-analysis.yml/badge.svg
+    :target: https://github.com/fredrikw/python-nipals/actions/workflows/codeql-analysis.yml
+    :alt: CodeQL Analysis
 
 .. |docs| image:: https://readthedocs.org/projects/python-nipals/badge/?style=flat
     :target: https://readthedocs.org/projects/python-nipals
