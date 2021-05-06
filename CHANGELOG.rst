@@ -1,6 +1,13 @@
 Changelog
 =========
 
+0.5.3 (2021-05-06)
+------------------
+
+* Fixed error on numpy version >= 1.19
+* Updated supported versions
+* Moved CI to Github Action (pt 1)
+
 0.5.2 (2019-06-04)
 ------------------
 
