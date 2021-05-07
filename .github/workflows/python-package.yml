@@ -1,4 +1,4 @@
-# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# This workflow will install Python dependencies, run tests and lint with a variety of Python versions and install on TestPyPI and releases on PyPI
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
 name: Python package
@@ -8,6 +8,8 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
+  release:
+    types: [published]
 
 jobs:
   build:
@@ -44,6 +46,7 @@ jobs:
       run: |
         python -m pip install wheel build
         python -m build --outdir dist/ --sdist --wheel
+        echo ${{ github.event_name }}
     - name: Publish 📦 to Test PyPI
       if: ${{ matrix.python-version == 3.8 }}
       uses: pypa/gh-action-pypi-publish@v1.4.2
@@ -51,7 +54,7 @@ jobs:
         password: ${{ secrets.TEST_PYPI_API_TOKEN }}
         repository_url: https://test.pypi.org/legacy/
     - name: Publish distribution 📦 to PyPI
-      if: ${{ matrix.python-version == 3.8 && startsWith(github.ref, 'refs/tags') }}
+      if: ${{ matrix.python-version == 3.8 && github.event_name == 'release') }}
       uses: pypa/gh-action-pypi-publish@v1.4.2
       with:
         password: ${{ secrets.PYPI_API_TOKEN }}
