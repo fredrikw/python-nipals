@@ -390,7 +390,7 @@ def test_pls_optionvariations(caplog):
 def test_pls_multiy():
     pls = nipals.PLS(oliveoil.iloc[:, :5], oliveoil.iloc[:, 5:])
     assert pls.fit(ncomp=2)
-    np.testing.assert_almost_equal(pls.scores.values, oliveoil_scores, 4)
+    np.testing.assert_almost_equal(pls.scores.values, oliveoil_scores * [-1, 1], 4)
 
 
 def test_pls_missing_y():
@@ -606,3 +606,21 @@ def test_overviewplotplot_pls():
     plt = pls.overviewplot()
     assert isinstance(plt, matplotlib.figure.Figure)
     return plt
+
+
+def test_pls_full_na_row():
+    tmpx = oliveoil.iloc[:, :5].copy()
+    tmpx.iloc[2, :] = np.nan
+    pls = nipals.PLS(tmpx, oliveoil.iloc[:, 5:])
+    with pytest.raises(ValueError) as e_info:
+        pls.fit(2)
+    assert e_info.match("X matrix contains row with only NA values")
+
+
+def test_pca_full_na_row():
+    tmpx = oliveoil.iloc[:, :5].copy()
+    tmpx.iloc[2, :] = np.nan
+    nip = nipals.Nipals(tmpx)
+    with pytest.raises(ValueError) as e_info:
+        nip.fit(2)
+    assert e_info.match("X matrix contains row with only NA values")

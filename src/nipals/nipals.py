@@ -400,6 +400,8 @@ class PLS(object):
         # NA handling
         x_miss = np.isnan(self.x_mat)
         x_hasna = x_miss.any()
+        if x_miss.all(axis=1).any():
+            raise ValueError("X matrix contains row with only NA values")
         y_miss = np.isnan(self.y_mat)
         y_hasna = y_miss.any()
         if x_hasna or y_hasna:
@@ -879,6 +881,8 @@ class Nipals(object):
         # NA handling
         x_miss = np.isnan(self.x_mat)
         hasna = x_miss.any()
+        if x_miss.all(axis=1).any():
+            raise ValueError("X matrix contains row with only NA values")
         if hasna:
             logging.info("Data has NA values")
 
