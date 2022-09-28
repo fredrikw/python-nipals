@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.5.5 (2022-09-28)
+------------------
+
+* Added check for X-matrix with row full of NAs
+
 0.5.4 (2021-05-07)
 ------------------
 
