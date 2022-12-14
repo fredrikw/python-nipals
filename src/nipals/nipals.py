@@ -488,7 +488,7 @@ class PLS(object):
                     else:
                         qh = train_y_mat.T.dot(th) / sum(th * th)
                     # Normalize
-                    # According to Analytica Chimica Acta, 186 (1986) 1-17 this normalization
+                    # According to Analytica Chimica Acta, 185 (1986) 1-17 this normalization
                     # should be done. However, if so, the results are not the same as th R package
                     # pls plsr method or Evince.
                     # qh = qh / math.sqrt(np.nansum(qh*qh))
@@ -535,7 +535,7 @@ class PLS(object):
             else:
                 ph = train_x_mat.T.dot(th) / sum(th * th)
             # Normalize
-            # According to Analytica Chimica Acta, 186 (1986) 1-17 this normalization
+            # According to Analytica Chimica Acta, 185 (1986) 1-17 this normalization
             # should be done. However, if so, the results are not the same as th R package
             # pls plsr method or Evince.
             # pold_len = math.sqrt(np.nansum(ph*ph))
