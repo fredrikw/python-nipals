@@ -47,9 +47,9 @@ Overview
     :alt: PyPI Package latest release
     :target: https://pypi.org/project/nipals/
 
-.. |commits-since| image:: https://img.shields.io/github/commits-since/fredrikw/python-nipals/v0.5.5.svg
+.. |commits-since| image:: https://img.shields.io/github/commits-since/fredrikw/python-nipals/v0.5.6.svg
     :alt: Commits since latest release
-    :target: https://github.com/fredrikw/python-nipals/compare/v0.5.5...master
+    :target: https://github.com/fredrikw/python-nipals/compare/v0.5.6...master
 
 .. |wheel| image:: https://img.shields.io/pypi/wheel/nipals.svg
     :alt: PyPI Wheel
@@ -86,7 +86,9 @@ Installation
 Documentation
 =============
 
-https://python-nipals.readthedocs.io/
+See https://github.com/fredrikw/python-nipals/blob/master/docs/nipals_demo_iris.ipynb
+for an example and the tests at https://github.com/fredrikw/python-nipals/tree/master/tests.
+
 
 Development
 ===========

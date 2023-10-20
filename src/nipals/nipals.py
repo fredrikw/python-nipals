@@ -1,8 +1,6 @@
 from __future__ import division
 
 import logging
-
-# logging.basicConfig(level=logging.INFO)
 import math
 
 import numpy as np
@@ -294,9 +292,9 @@ class PLS(object):
 
     def __init__(self, x_df, y_df):
         super(PLS, self).__init__()
-        if type(x_df) != pd.core.frame.DataFrame:
+        if not isinstance(x_df, pd.DataFrame):
             x_df = pd.DataFrame(x_df)
-        if type(y_df) != pd.core.frame.DataFrame:
+        if not isinstance(y_df, pd.DataFrame):
             y_df = pd.DataFrame(y_df)
         # Make sure data is numeric
         self.x_df = x_df.astype("float")
@@ -613,7 +611,7 @@ class PLS(object):
         """
         nr, nc = self.y_mat.shape
         ncomp = self.scores.shape[1]
-        A0 = 0 if type(self.y_mean) == int else 1
+        A0 = 0 if isinstance(self.y_mean, int) else 1
         ny = np.sqrt(nr / (nr - ncomp - A0))
         F2 = self.y_mat * self.y_mat
         s = np.sqrt(np.nansum(F2, axis=1) / (nc - ncomp)) * ny
@@ -630,7 +628,7 @@ class PLS(object):
         """
         nr, nc = self.x_mat.shape
         ncomp = self.scores.shape[1]
-        A0 = 0 if type(self.x_mean) == int else 1
+        A0 = 0 if isinstance(self.x_mean, int) else 1
         ny = np.sqrt(nr / (nr - ncomp - A0))
         E2 = self.x_mat * self.x_mat
         s = np.sqrt(np.nansum(E2, axis=1) / (nc - ncomp)) * ny
@@ -718,7 +716,7 @@ class PLS(object):
         dmx = self.dModX()
         nr, nc = self.x_mat.shape
         ncomp = self.scores.shape[1]
-        A0 = 0 if type(self.x_mean) == int else 1
+        A0 = 0 if isinstance(self.x_mean, int) else 1
         fc = np.sqrt(f.isf(0.05, nr - ncomp - A0, nc - ncomp))
         ax = pd.Series(dmx, index=self.x_df.index.get_level_values(0)).plot(
             kind="bar", color="green"
@@ -730,7 +728,7 @@ class PLS(object):
         dmy = self.dModY()
         nr, nc = self.y_mat.shape
         ncomp = self.scores.shape[1]
-        A0 = 0 if type(self.y_mean) == int else 1
+        A0 = 0 if isinstance(self.y_mean, int) else 1
         fc = np.sqrt(f.isf(0.05, nr - ncomp - A0, nc - ncomp))
         ax = pd.Series(dmy, index=self.y_df.index.get_level_values(0)).plot(
             kind="bar", color="green"
@@ -747,7 +745,7 @@ class Nipals(object):
 
     def __init__(self, x_df):
         super(Nipals, self).__init__()
-        if type(x_df) != pd.core.frame.DataFrame:
+        if not isinstance(x_df, pd.DataFrame):
             x_df = pd.DataFrame(x_df)
         self.x_df = x_df
         # Make sure data is numeric
@@ -831,7 +829,8 @@ class Nipals(object):
         scale - whether to scale the data, defaults to True
         maxiter - maximum number of iterations before convergence is considered failed, defaults to 500
         startcol - column in X data to start iteration from, if set to None, the column with maximal variance is selected, defaults to None
-        eigsweep - whether to sweep out eigenvalues from the final scores, defaults to False"""
+        eigsweep - whether to sweep out eigenvalues from the final scores, defaults to False
+        """
         self.eigsweep = eigsweep
         if ncomp is None:
             ncomp = min(self.x_df.shape)
@@ -985,7 +984,7 @@ class Nipals(object):
         """
         nr, nc = self.x_mat.shape
         ncomp = self.scores.shape[1]
-        A0 = 0 if type(self.x_mean) == int else 1
+        A0 = 0 if isinstance(self.x_mean, int) else 1
         ny = np.sqrt(nr / (nr - ncomp - A0))
         E2 = self.x_mat * self.x_mat
         s = np.sqrt(np.nansum(E2, axis=1) / (nc - ncomp)) * ny
@@ -1082,7 +1081,7 @@ class Nipals(object):
         dmx = self.dModX()
         nr, nc = self.x_mat.shape
         ncomp = self.scores.shape[1]
-        A0 = 0 if type(self.x_mean) == int else 1
+        A0 = 0 if isinstance(self.x_mean, int) else 1
         fc = np.sqrt(f.isf(0.05, nr - ncomp - A0, nc - ncomp))
         ax = pd.Series(dmx, index=self.x_df.index.get_level_values(0)).plot(
             kind="bar", color="green"

@@ -34,7 +34,7 @@ if sys.version_info.major == 3 and sys.version_info.minor < 6:
 
 setup(
     name="nipals",
-    version="0.5.5",
+    version="0.5.6",
     license="MIT license",
     description="A module for calculation of PCA with the NIPALS algorithm",
     long_description="%s\n%s"
