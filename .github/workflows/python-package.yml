@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.6', '3.7', '3.8', '3.9', '3.10']
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
 
     steps:
     - uses: actions/checkout@v2
@@ -42,13 +42,13 @@ jobs:
       run: |
         pytest
     - name: Build dist
-      if: ${{ matrix.python-version == 3.8 }}
+      if: ${{ matrix.python-version == 3.10 }}
       run: |
         python -m pip install wheel build
         python -m build --outdir dist/ --sdist --wheel
         echo ${{ github.event_name }}
     - name: Publish 📦 to Test PyPI
-      if: ${{ matrix.python-version == 3.8 }}
+      if: ${{ matrix.python-version == 3.10 }}
       uses: pypa/gh-action-pypi-publish@v1.4.2
       with:
         password: ${{ secrets.TEST_PYPI_API_TOKEN }}
@@ -56,7 +56,7 @@ jobs:
         skip_existing: true
         verbose: true
     - name: Publish distribution 📦 to PyPI
-      if: ${{ matrix.python-version == 3.8 && github.event_name == 'release' }}
+      if: ${{ matrix.python-version == 3.10 && github.event_name == 'release' }}
       uses: pypa/gh-action-pypi-publish@v1.4.2
       with:
         password: ${{ secrets.PYPI_API_TOKEN }}
