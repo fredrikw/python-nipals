@@ -86,7 +86,9 @@ Installation
 Documentation
 =============
 
-https://python-nipals.readthedocs.io/
+See https://github.com/fredrikw/python-nipals/blob/master/docs/nipals_demo_iris.ipynb
+for an example and the tests at https://github.com/fredrikw/python-nipals/tree/master/tests.
+
 
 Development
 ===========
