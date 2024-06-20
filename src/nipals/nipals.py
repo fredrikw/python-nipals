@@ -45,7 +45,7 @@ def _plot(
             zorder=3,
             marker=markers[0],
             edgecolor="black",
-            linewidth="1",
+            linewidth=1,
             c=classcolors[0],
         )
         for i, lev in enumerate(classlevels[1:]):
@@ -58,7 +58,7 @@ def _plot(
                 marker=markers[i + 1],
                 c=classcolors[i + 1],
                 edgecolor="black",
-                linewidth="1",
+                linewidth=1,
                 ax=ax,
                 grid=True,
             )
@@ -72,7 +72,7 @@ def _plot(
             zorder=3,
             marker=markers[0],
             edgecolor="black",
-            linewidth="1",
+            linewidth=1,
             c=color,
             grid=True,
         )
@@ -116,7 +116,7 @@ def _plot(
                         marker=predmarkers[lev],
                         c=predcolors[lev],
                         edgecolor="black",
-                        linewidth="1",
+                        linewidth=1,
                         ax=ax,
                         grid=True,
                     )
@@ -126,9 +126,11 @@ def _plot(
                         ).rename(columns={"index": "level_0"}).apply(
                             lambda row: ax.annotate(
                                 row[
-                                    "level_{}".format(predlabels)
-                                    if 0 == predlabels
-                                    else predlabels
+                                    (
+                                        "level_{}".format(predlabels)
+                                        if 0 == predlabels
+                                        else predlabels
+                                    )
                                 ],
                                 (row[comps[0]], row[comps[1]]),
                                 xytext=(10, -5),
@@ -158,7 +160,7 @@ def _plot(
                 marker=predmarkers[0],
                 c=predcolors[0],
                 edgecolor="black",
-                linewidth="1",
+                linewidth=1,
                 ax=ax,
                 grid=True,
             )
@@ -169,9 +171,11 @@ def _plot(
                     lambda row: ax.annotate(
                         formatval(
                             row[
-                                "level_{}".format(predlabels)
-                                if 0 == predlabels
-                                else predlabels
+                                (
+                                    "level_{}".format(predlabels)
+                                    if 0 == predlabels
+                                    else predlabels
+                                )
                             ]
                         ),
                         (row[comps[0]], row[comps[1]]),
@@ -844,8 +848,8 @@ class Nipals(object):
         self.x_mat = self.x_df.values
         self.center = center
         self.scale = scale
-        self.x_mean = np.nanmean(self.x_mat, axis=0)
-        self.x_std = np.nanstd(self.x_mat, axis=0, ddof=1)
+        self.x_mean: np.ndarray = np.nanmean(self.x_mat, axis=0)
+        self.x_std: np.ndarray = np.nanstd(self.x_mat, axis=0, ddof=1)
 
         # check for zero variance variables
         x_zerovar = self.x_df.columns[self.x_std == 0].tolist()
@@ -1051,7 +1055,12 @@ class Nipals(object):
             color,
         )
 
-    def predict(self, new_x):
+    def predict(self, new_x: np.ndarray):
+        """Predict new values into the NIPALS model
+
+        parameters:
+        new_x: np.ndarray
+        """
         self.new_x = new_x
         try:
             if self.center:

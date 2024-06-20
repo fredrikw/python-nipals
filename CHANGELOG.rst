@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.5.8 (2024-06-20)
+------------------
+
+* Fix linewidth attributes on plots to allow saving the plots
+
 0.5.6 (2023-10-20)
 ------------------
 
